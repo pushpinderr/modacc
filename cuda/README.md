@@ -43,3 +43,5 @@ For running and generating all the plots for i) evaluating speedups of fine-grai
 <code>
 bash scripts/generate_plots.sh batch_size sequence_length hidden_size
 </code>
+
+Sample plots for an experiment with batch size of 4, sequence length of 1024 and hidden size of 1024 are already present in the plots folder.
