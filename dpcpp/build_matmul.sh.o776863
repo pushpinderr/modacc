@@ -1,0 +1,15 @@
+
+########################################################################
+#      Date:           Thu 07 Jan 2021 10:37:21 PM PST
+#    Job ID:           776863.v-qsvr-1.aidevcloud
+#      User:           u41227
+# Resources:           neednodes=s012-n003:iris_xe_max:ppn=2,nodes=s012-n003:iris_xe_max:ppn=2,walltime=06:00:00
+########################################################################
+
+dpcpp src/matmul.cpp -o ./obj/matmul -I/glob/development-tools/versions/oneapi/gold/inteloneapi/mkl/latest/include -mkl -fsycl-device-code-split=per_kernel
+
+########################################################################
+# End of output for job 776863.v-qsvr-1.aidevcloud
+# Date: Thu 07 Jan 2021 10:37:31 PM PST
+########################################################################
+
