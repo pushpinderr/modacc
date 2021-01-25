@@ -9,7 +9,7 @@ run: matmul
 
 DPCPP_OPTS = -I${MKLROOT}/include -mkl -fsycl-device-code-split=per_kernel
 
-matmul: src/matmul.cpp
+matmul: src/matmul_finegrained.cpp
 	dpcpp $< -o ./obj/$@ $(DPCPP_OPTS)
 
 clean:

@@ -4,13 +4,13 @@ default: run
 
 all: run
 
-run: matmult
-	./matmul
+run: matmul
+	./obj/./matmul
 
 DPCPP_OPTS = -I${MKLROOT}/include -mkl -fsycl-device-code-split=per_kernel
 
-matrix_mul_mkl: src/matmul.cpp
-	dpcpp $< -o $@ $(DPCPP_OPTS)
+matmul: src/matmul.cpp
+	dpcpp $< -o ./obj/$@ $(DPCPP_OPTS)
 
 clean:
 	-rm -f matmul
