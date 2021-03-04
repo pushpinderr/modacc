@@ -419,7 +419,7 @@ class ScheduleEngine {
     int num_queues;
     cublasHandle_t handle;
     cudaStream_t compute[NUM_STREAMS];
-    cudaStream_t& getStream(int idx){return compute[idx];}
+    cudaStream_t* getStream(int idx){return &compute[idx];}
    
 };
 
@@ -457,18 +457,18 @@ class Buffer {
             std::cout << _host_data[i] << "\n";
     }
     
-    void copyD2H(cudaStream_t q, int offset=0)
+    void copyD2H(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, q));
+      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, *q));
     }
 
-    void copyH2D(cudaStream_t q, int offset=0)
+    void copyH2D(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, q));
+      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, *q));
     }
 
 
