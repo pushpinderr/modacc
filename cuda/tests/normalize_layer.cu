@@ -28,22 +28,6 @@ namespace cg = cooperative_groups;
 #define NORM_REG (MAX_REGISTERS / 4)
 
 
-template <typename T>
-void copyH2D(T *src, T *dst, size_t size_in_bytes, cudaStream_t q)
-{
-    CHECK(cudaMemcpyAsync(&src, &dst, size_in_bytes,
-                           cudaMemcpyHostToDevice, q));
-
-}
-template <typename T>
-void copyD2H(T *src, T *dst, size_t size_in_bytes, cudaStream_t q)
-{
-    CHECK(cudaMemcpyAsync(&src, &dst, size_in_bytes,
-                           cudaMemcpyDeviceToHost, q));
-
-}
-
-
 __global__ void fused_bias_residual_layer_norm(float* vals,
                                                const float* residual,
                                                const float* gamma,
@@ -262,7 +246,7 @@ void launch_bias_residual_layer_norm(T* vals,
                                      float epsilon,
                                      int batch_size,
                                      int hidden_dim,
-                                     cudaStream_t stream,
+                                     cudaStream_t& stream,
                                      bool preLayerNorm,
                                      bool training,
                                      T* vars,
@@ -276,7 +260,7 @@ void launch_bias_residual_layer_norm<float>(float* vals,
                                             float epsilon,
                                             int batch_size,
                                             int hidden_dim,
-                                            cudaStream_t stream,
+                                            cudaStream_t& stream,
                                             bool preLayerNorm,
                                             bool training,
                                             float* vars,
@@ -307,7 +291,7 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
                                              float epsilon,
                                              int batch_size,
                                              int hidden_dim,
-                                             cudaStream_t stream,
+                                             cudaStream_t& stream,
                                              bool preLayerNorm,
                                              bool training,
                                              __half* vars,
@@ -419,7 +403,7 @@ class ScheduleEngine {
     int num_queues;
     cublasHandle_t handle;
     cudaStream_t compute[NUM_STREAMS];
-    cudaStream_t* getStream(int idx){return &compute[idx];}
+    cudaStream_t& getStream(int idx){return compute[idx];}
    
 };
 
@@ -457,18 +441,18 @@ class Buffer {
             std::cout << _host_data[i] << "\n";
     }
     
-    void copyD2H(cudaStream_t *q, int offset=0)
+    void copyD2H(cudaStream_t &q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, *q));
+      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, q));
     }
 
-    void copyH2D(cudaStream_t *q, int offset=0)
+    void copyH2D(cudaStream_t &q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, *q));
+      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, q));
     }
 
 
@@ -527,7 +511,7 @@ public:
                                         config_.epsilon,
                                         bsz,
                                         config_.hiddenDim,
-                                        *(SE->getStream(0)),
+                                        SE->getStream(0),
                                         preLayerNorm,
                                         config_.training,
                                         vars->get_device_data(),
