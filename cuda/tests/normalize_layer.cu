@@ -246,7 +246,7 @@ void launch_bias_residual_layer_norm(T* vals,
                                      float epsilon,
                                      int batch_size,
                                      int hidden_dim,
-                                     cudaStream_t& stream,
+                                     cudaStream_t* stream,
                                      bool preLayerNorm,
                                      bool training,
                                      T* vars,
@@ -260,7 +260,7 @@ void launch_bias_residual_layer_norm<float>(float* vals,
                                             float epsilon,
                                             int batch_size,
                                             int hidden_dim,
-                                            cudaStream_t& stream,
+                                            cudaStream_t* stream,
                                             bool preLayerNorm,
                                             bool training,
                                             float* vars,
@@ -279,7 +279,7 @@ void launch_bias_residual_layer_norm<float>(float* vals,
 
     dim3 block_dim(threads);
 
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream>>>(
+    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[0]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim);
 }
 
@@ -291,7 +291,7 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
                                              float epsilon,
                                              int batch_size,
                                              int hidden_dim,
-                                             cudaStream_t& stream,
+                                             cudaStream_t* stream,
                                              bool preLayerNorm,
                                              bool training,
                                              __half* vars,
@@ -312,7 +312,7 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
 
     dim3 block_dim(threads);
 
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream>>>(
+    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[0]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim / 2);
 }
 
@@ -395,14 +395,15 @@ class ScheduleEngine {
     ScheduleEngine(int num_queues) {
     assert(num_queues<NUM_STREAMS);
     CHECK_CUBLAS(cublasCreate(&handle));
-        this->num_queues = num_queues;
+    this->num_queues = num_queues;
+    compute = (cudaStream_t *) malloc(num_queues * sizeof(cudaStream_t));
    }
 
-   ~ScheduleEngine() {}
+   ~ScheduleEngine() { delete compute; }
 
     int num_queues;
     cublasHandle_t handle;
-    cudaStream_t compute[NUM_STREAMS];
+    cudaStream_t *compute;
     cudaStream_t& getStream(int idx){return compute[idx];}
    
 };
@@ -441,18 +442,18 @@ class Buffer {
             std::cout << _host_data[i] << "\n";
     }
     
-    void copyD2H(cudaStream_t &q, int offset=0)
+    void copyD2H(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, q));
+      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, q[0]));
     }
 
-    void copyH2D(cudaStream_t &q, int offset=0)
+    void copyH2D(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, q));
+      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, q[0]));
     }
 
 
@@ -499,10 +500,10 @@ public:
                            bool preLayerNorm = false)
     {
          
-        vals->copyH2D(SE->compute[0]);
-        residual->copyH2D(SE->compute[0]);
-        gamma->copyH2D(SE->compute[0];
-        betta->copyH2D(SE->compute[0]);
+        vals->copyH2D(SE->compute);
+        residual->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute);
+        betta->copyH2D(SE->compute);
 
         launch_bias_residual_layer_norm(vals->get_device_data(),
                                         residual->get_device_data(),
@@ -511,17 +512,17 @@ public:
                                         config_.epsilon,
                                         bsz,
                                         config_.hiddenDim,
-                                        SE->compute[0],
+                                        SE->compute,
                                         preLayerNorm,
                                         config_.training,
                                         vars->get_device_data(),
                                         means->get_device_data());
 
 
-        vals->copyD2H(SE->compute[0]);
-        residual->copyD2H(SE->compute[0]);
-        gamma->copyD2H(SE->compute[0]);
-        betta->copyD2H(SE->compute[0]);
+        vals->copyD2H(SE->compute);
+        residual->copyD2H(SE->compute);
+        gamma->copyD2H(SE->compute);
+        betta->copyD2H(SE->compute);
 
 
     }
