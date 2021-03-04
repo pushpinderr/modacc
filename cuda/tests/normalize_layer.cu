@@ -499,10 +499,10 @@ public:
                            bool preLayerNorm = false)
     {
          
-        vals->copyH2D(SE->getStream(0));
-        residual->copyH2D(SE->getStream(0));
-        gamma->copyH2D(SE->getStream(0));
-        betta->copyH2D(SE->getStream(0));
+        vals->copyH2D(SE->compute[0]);
+        residual->copyH2D(SE->compute[0]);
+        gamma->copyH2D(SE->compute[0];
+        betta->copyH2D(SE->compute[0]);
 
         launch_bias_residual_layer_norm(vals->get_device_data(),
                                         residual->get_device_data(),
@@ -511,17 +511,17 @@ public:
                                         config_.epsilon,
                                         bsz,
                                         config_.hiddenDim,
-                                        SE->getStream(0),
+                                        SE->compute[0],
                                         preLayerNorm,
                                         config_.training,
                                         vars->get_device_data(),
                                         means->get_device_data());
 
 
-        vals->copyD2H(SE->getStream(0));
-        residual->copyD2H(SE->getStream(0));
-        gamma->copyD2H(SE->getStream(0));
-        betta->copyD2H(SE->getStream(0));
+        vals->copyD2H(SE->compute[0]);
+        residual->copyD2H(SE->compute[0]);
+        gamma->copyD2H(SE->compute[0]);
+        betta->copyD2H(SE->compute[0]);
 
 
     }
