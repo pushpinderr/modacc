@@ -361,10 +361,10 @@ Forward	cuda/include/normalize_layer.h	/^    void Forward(int bsz,$/;"	f	class:N
 Forward	cuda/include/softmax.h	/^    void Forward(int bsz, T* vals, const T* attn_mask, cudaStream_t& stream)$/;"	f	class:Softmax
 Forward	cuda/include/strided_batch_gemm.h	/^    void Forward(int bsz, T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
 Forward	cuda/src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::Forward($/;"	f	class:BertTransformerLayer
-Forward	dpcpp/tests/test_engine.cpp	/^    void Forward(int bsz, Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
+Forward	dpcpp/tests/test_engine.cpp	/^    void Forward(Buffer<T> *input_ptr, Buffer<T> *weights, Buffer<T> *out,$/;"	f	class:FeedForward
 ForwardCheckpoint	cuda/include/normalize_layer.h	/^    void ForwardCheckpoint(int bsz,  \/\/ batch * seq$/;"	f	class:Normalize_Layer
 ForwardPartitionWeights	dpcpp/include/feed_forward.h	/^    void ForwardPartitionWeights(int bsz, const T *input_ptr, const T *weights,$/;"	f	class:FeedForward
-ForwardPartitionWeights	dpcpp/tests/test_engine.cpp	/^    void ForwardPartitionWeights(int bsz, const T *input_ptr, const T *weights,$/;"	f	class:FeedForward
+ForwardPartitionWeights	dpcpp/tests/test_engine.cpp	/^    void ForwardPartitionWeights(Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
 ForwardPlusSave	cuda/include/strided_batch_gemm.h	/^    void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
 ForwardWithBias	cuda/include/dropout.h	/^    void ForwardWithBias(int bsz, T* vals, const T* bias, cudaStream_t stream)$/;"	f	class:Dropout
 ForwardWithBias	cuda/include/dropout.h	/^    void ForwardWithBias(int bsz,$/;"	f	class:Dropout
@@ -402,6 +402,7 @@ GetTimeInSeconds	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    float 
 GetTimeInSeconds	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    float GetTimeInSeconds()$/;"	f	class:Stopwatch
 GetTimeInSeconds	dpcpp/src/matmul.cpp	/^    float GetTimeInSeconds()$/;"	f	class:Stopwatch
 GetTimeInSeconds	dpcpp/src/matmul_finegrained.cpp	/^    float GetTimeInSeconds()$/;"	f	class:Stopwatch
+GetTimeInSeconds	dpcpp/tests/test_engine.cpp	/^    float GetTimeInSeconds() {$/;"	f	class:Stopwatch
 GetWorkSpace	cuda/include/context.h	/^    void* GetWorkSpace() { return _workspace; }$/;"	f	class:Context
 HEX	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	483;"	d	file:
 HEX	cuda/build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	468;"	d	file:
@@ -501,6 +502,7 @@ Reset	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    void Reset() { m_
 Reset	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
 Reset	dpcpp/src/matmul.cpp	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
 Reset	dpcpp/src/matmul_finegrained.cpp	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
+Reset	dpcpp/tests/test_engine.cpp	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
 Restart	cuda/include/StopWatch.h	/^    void Restart()$/;"	f	class:Stopwatch
 Run	cuda/include/gemm_test.h	/^    int Run(int loops, Func f)$/;"	f	class:GemmTest
 Run	cuda/include/gemm_test.h	/^    int Run(int loops, Func f)$/;"	f	class:StridedGemmTest
@@ -546,7 +548,7 @@ STRINGIFY_HELPER	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	308
 STRINGIFY_HELPER	cuda/build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	293;"	d	file:
 ScheduleEngine	dpcpp/include/ScheduleEngine.h	/^    ScheduleEngine(int num_queues) {$/;"	f	class:ScheduleEngine
 ScheduleEngine	dpcpp/include/ScheduleEngine.h	/^class ScheduleEngine {$/;"	c
-ScheduleEngine	dpcpp/tests/test_engine.cpp	/^    ScheduleEngine(int num_queues) {$/;"	f	class:ScheduleEngine
+ScheduleEngine	dpcpp/tests/test_engine.cpp	/^    ScheduleEngine(int num_queues, int device_type) {$/;"	f	class:ScheduleEngine
 ScheduleEngine	dpcpp/tests/test_engine.cpp	/^class ScheduleEngine {$/;"	c	file:
 SetConfig	cuda/include/strided_batch_gemm.h	/^        void SetConfig(int mm, int nn, int kk)$/;"	f	struct:StridedBatchGemm::Config
 SetConfig	cuda/include/strided_batch_gemm.h	/^    inline void SetConfig(int m, int n, int k) { _config.SetConfig(m, n, k); }$/;"	f	class:StridedBatchGemm
@@ -580,6 +582,8 @@ Stopwatch	dpcpp/src/matmul.cpp	/^    Stopwatch()$/;"	f	class:Stopwatch
 Stopwatch	dpcpp/src/matmul.cpp	/^class Stopwatch {$/;"	c	file:
 Stopwatch	dpcpp/src/matmul_finegrained.cpp	/^    Stopwatch()$/;"	f	class:Stopwatch
 Stopwatch	dpcpp/src/matmul_finegrained.cpp	/^class Stopwatch {$/;"	c	file:
+Stopwatch	dpcpp/tests/test_engine.cpp	/^    Stopwatch() {$/;"	f	class:Stopwatch
+Stopwatch	dpcpp/tests/test_engine.cpp	/^class Stopwatch {$/;"	c	file:
 StridedBatchGemm	cuda/include/strided_batch_gemm.h	/^    StridedBatchGemm(const Config& config) : _config(config) {}$/;"	f	class:StridedBatchGemm
 StridedBatchGemm	cuda/include/strided_batch_gemm.h	/^class StridedBatchGemm {$/;"	c
 StridedGemmTest	cuda/include/gemm_test.h	/^    StridedGemmTest(int b,$/;"	f	class:StridedGemmTest
@@ -685,6 +689,7 @@ dim	cuda/include/dropout.h	/^        uint32_t dim;$/;"	m	struct:Dropout::Config
 ds_transformer_backward	cuda/src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_backward($/;"	f
 ds_transformer_forward	cuda/src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_forward($/;"	f
 epsilon	cuda/include/normalize_layer.h	/^        float epsilon;$/;"	m	struct:Normalize_Layer::Config
+exceptionHandler	dpcpp/tests/test_ce.cpp	/^void exceptionHandler(sycl::exception_list exceptions) {$/;"	f
 exceptionHandler	dpcpp/tests/test_engine.cpp	/^void exceptionHandler(sycl::exception_list exceptions) {$/;"	f
 features	cuda/build/CMakeFiles/feature_tests.c	/^  const char features[] = {"\\n"$/;"	v
 features	cuda/build/CMakeFiles/feature_tests.cxx	/^  const char features[] = {"\\n"$/;"	v
@@ -694,8 +699,11 @@ fp	dpcpp/include/Buffer.h	/^    FILE *fp;$/;"	m	class:Buffer
 gemm_algos	cuda/include/feed_forward.h	/^        std::array<int, 3> gemm_algos;$/;"	m	struct:FeedForward::Config
 gemm_algos	cuda/include/strided_batch_gemm.h	/^        std::array<int, 3> gemm_algos;$/;"	m	struct:StridedBatchGemm::Config
 get_device_data	dpcpp/tests/test_engine.cpp	/^    T *get_device_data() { return _device_data; }$/;"	f	class:Buffer
+get_device_data	dpcpp/tests/test_engine.cpp	/^    T *get_device_data(int offset) { return _device_data + offset; }$/;"	f	class:Buffer
 get_host_data	dpcpp/tests/test_engine.cpp	/^    T *get_host_data() { return _host_data; }$/;"	f	class:Buffer
-get_size	dpcpp/tests/test_engine.cpp	/^    T *get_size() { return sizeof(T) * num_elements; }$/;"	f	class:Buffer
+get_host_data	dpcpp/tests/test_engine.cpp	/^    T *get_host_data(int offset) { return _host_data + offset; }$/;"	f	class:Buffer
+get_num_elements	dpcpp/tests/test_engine.cpp	/^    int get_num_elements() { return num_elements; }$/;"	f	class:Buffer
+get_size	dpcpp/tests/test_engine.cpp	/^    size_t get_size() { return sizeof(T) * num_elements; }$/;"	f	class:Buffer
 get_workspace_size	cuda/src/ds_transformer_cuda.cpp	/^size_t get_workspace_size(int maxBatchSize, int seq_len, int hidden_size,$/;"	f
 handle	cuda/include/gemm_test.h	/^    cublasHandle_t handle;$/;"	m	class:GemmTest
 handle	cuda/include/gemm_test.h	/^    cublasHandle_t handle;$/;"	m	class:StridedGemmTest
@@ -721,6 +729,7 @@ info_version_internal	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.
 info_version_internal	cuda/build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_version_internal[] = {$/;"	v
 init_ones	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^float init_ones()$/;"	f
 init_ones	dpcpp/src/matmul_finegrained.cpp	/^float init_ones()$/;"	f
+init_ones	dpcpp/tests/test_engine.cpp	/^    void init_ones() {$/;"	f	class:Buffer
 init_seq_length	cuda/src/ds_transformer_cuda.cpp	/^const int init_seq_length = 128;$/;"	v
 initializeOnes	cuda/include/common.h	/^void initializeOnes(float *input, int num_elements)$/;"	f
 inputSize	cuda/include/feed_forward.h	/^        int inputSize;$/;"	m	struct:FeedForward::Config
@@ -746,6 +755,7 @@ m_is_started	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    bool m_is_
 m_is_started	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    bool m_is_started;$/;"	m	class:Stopwatch	file:
 m_is_started	dpcpp/src/matmul.cpp	/^    bool m_is_started;$/;"	m	class:Stopwatch	file:
 m_is_started	dpcpp/src/matmul_finegrained.cpp	/^    bool m_is_started;$/;"	m	class:Stopwatch	file:
+m_is_started	dpcpp/tests/test_engine.cpp	/^    bool m_is_started;$/;"	m	class:Stopwatch	file:
 m_start_time	cuda/include/StopWatch.h	/^    LARGE_INTEGER m_start_time;$/;"	m	class:Stopwatch
 m_start_time	cuda/include/StopWatch.h	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec
 m_start_time	cuda/include/common.h	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec
@@ -753,12 +763,14 @@ m_start_time	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    struct tim
 m_start_time	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec	file:
 m_start_time	dpcpp/src/matmul.cpp	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec	file:
 m_start_time	dpcpp/src/matmul_finegrained.cpp	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec	file:
+m_start_time	dpcpp/tests/test_engine.cpp	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec	file:
 m_total_time	cuda/include/StopWatch.h	/^    double m_total_time;$/;"	m	class:Stopwatch
 m_total_time	cuda/include/common.h	/^    double m_total_time;$/;"	m	class:Stopwatch
 m_total_time	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    float m_total_time;$/;"	m	class:Stopwatch	file:
 m_total_time	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    float m_total_time;$/;"	m	class:Stopwatch	file:
 m_total_time	dpcpp/src/matmul.cpp	/^    float m_total_time;$/;"	m	class:Stopwatch	file:
 m_total_time	dpcpp/src/matmul_finegrained.cpp	/^    float m_total_time;$/;"	m	class:Stopwatch	file:
+m_total_time	dpcpp/tests/test_engine.cpp	/^    float m_total_time;$/;"	m	class:Stopwatch	file:
 main	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^int main(argc, argv) int argc; char *argv[];$/;"	f
 main	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^void main() {}$/;"	f
 main	cuda/build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^int main(int argc, char* argv[])$/;"	f
@@ -768,7 +780,8 @@ main	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^int main(int argc, cha
 main	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^int main(int argc, char*argv[])$/;"	f
 main	dpcpp/src/matmul.cpp	/^int main(int argc, char*argv[])$/;"	f
 main	dpcpp/src/matmul_finegrained.cpp	/^int main(int argc, char*argv[])$/;"	f
-main	dpcpp/tests/test_engine.cpp	/^int main() {$/;"	f
+main	dpcpp/tests/test_ce.cpp	/^int main(int argc, char *argv[]) {$/;"	f
+main	dpcpp/tests/test_engine.cpp	/^int main(int argc, char *argv[]) {$/;"	f
 means	cuda/include/normalize_layer.h	/^    T* means;$/;"	m	class:Normalize_Layer
 mem_alloc	cuda/include/softmax.h	/^        bool mem_alloc;$/;"	m	struct:Softmax::Config
 minus_infinity	cuda/include/general_kernels.h	15;"	d
@@ -788,6 +801,7 @@ plot_bar	cuda/scripts/plot_speedups.py	/^def plot_bar(filename):$/;"	f
 plot_line	cuda/scripts/plot_speedups.py	/^def plot_line(filename):$/;"	f
 print	cuda/include/common.h	/^void print(float *input, int num_elements)$/;"	f
 print_engine_info	dpcpp/tests/test_engine.cpp	/^    void print_engine_info() {$/;"	f	class:ScheduleEngine
+print_host_data	dpcpp/tests/test_engine.cpp	/^    void print_host_data() {$/;"	f	class:Buffer
 prob_depth	cuda/include/softmax.h	/^        size_t prob_depth;$/;"	m	struct:Softmax::Config
 q_buf	cuda/include/strided_batch_gemm.h	/^    const T* q_buf;$/;"	m	class:StridedBatchGemm
 qnxnto	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* qnxnto = "INFO" ":" "qnxnto[]";$/;"	v
@@ -801,6 +815,7 @@ restart	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    void restart()$
 restart	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    void restart()$/;"	f	class:Stopwatch
 restart	dpcpp/src/matmul.cpp	/^    void restart()$/;"	f	class:Stopwatch
 restart	dpcpp/src/matmul_finegrained.cpp	/^    void restart()$/;"	f	class:Stopwatch
+restart	dpcpp/tests/test_engine.cpp	/^    void restart() {$/;"	f	class:Stopwatch
 s_transformer_layers	cuda/src/ds_transformer_cuda.cpp	/^static std::unordered_map<int, std::shared_ptr<void>> s_transformer_layers;$/;"	v	file:
 seqLength	cuda/include/normalize_layer.h	/^        uint32_t seqLength;$/;"	m	struct:Normalize_Layer::Config
 seq_length	cuda/include/softmax.h	/^        size_t seq_length;$/;"	m	struct:Softmax::Config
@@ -813,12 +828,14 @@ start	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    void start()$/;"	
 start	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    void start()$/;"	f	class:Stopwatch
 start	dpcpp/src/matmul.cpp	/^    void start()$/;"	f	class:Stopwatch
 start	dpcpp/src/matmul_finegrained.cpp	/^    void start()$/;"	f	class:Stopwatch
+start	dpcpp/tests/test_engine.cpp	/^    void start() {$/;"	f	class:Stopwatch
 stop	cuda/include/Timer.h	/^    cudaEvent_t start, stop;$/;"	m	class:GPUTimer
 stop	cuda/include/common.h	/^    void stop()$/;"	f	class:Stopwatch
 stop	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    void stop()$/;"	f	class:Stopwatch
 stop	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    void stop()$/;"	f	class:Stopwatch
 stop	dpcpp/src/matmul.cpp	/^    void stop()$/;"	f	class:Stopwatch
 stop	dpcpp/src/matmul_finegrained.cpp	/^    void stop()$/;"	f	class:Stopwatch
+stop	dpcpp/tests/test_engine.cpp	/^    void stop() {$/;"	f	class:Stopwatch
 temprature	cuda/include/softmax.h	/^        float temprature;$/;"	m	struct:Softmax::Config
 training	cuda/include/dropout.h	/^        bool training;$/;"	m	struct:Dropout::Config
 training	cuda/include/normalize_layer.h	/^        bool training;$/;"	m	struct:Normalize_Layer::Config
@@ -830,6 +847,7 @@ update_state	cuda/include/cpu_adam.h	/^    inline void update_state(float lr, fl
 useMean	cuda/include/normalize_layer.h	/^        bool useMean;$/;"	m	struct:Normalize_Layer::Config
 vals_hat	cuda/include/normalize_layer.h	/^    T* vals_hat;$/;"	m	class:Normalize_Layer
 vars	cuda/include/normalize_layer.h	/^    T* vars;$/;"	m	class:Normalize_Layer
+verifyProfiling	dpcpp/tests/test_ce.cpp	/^bool verifyProfiling(event Event) {$/;"	f
 verify_result	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^bool verify_result(int m, int n, int k, int ldc, float *C, float *C_reference)$/;"	f
 verify_result	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^bool verify_result(int m, int n, int k, int ldc, float *C, float *C_reference)$/;"	f
 verify_result	dpcpp/src/matmul.cpp	/^bool verify_result(int m, int n, int k, int ldc, float *C, float *C_reference)$/;"	f
@@ -859,5 +877,6 @@ y	cuda/scripts/plot_speedups.py	/^        y = []$/;"	v
 ~Stopwatch	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
 ~Stopwatch	dpcpp/src/matmul.cpp	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
 ~Stopwatch	dpcpp/src/matmul_finegrained.cpp	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
+~Stopwatch	dpcpp/tests/test_engine.cpp	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
 ~StridedBatchGemm	cuda/include/strided_batch_gemm.h	/^    virtual ~StridedBatchGemm() {}$/;"	f	class:StridedBatchGemm
 ~StridedGemmTest	cuda/include/gemm_test.h	/^    ~StridedGemmTest()$/;"	f	class:StridedGemmTest
