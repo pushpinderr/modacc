@@ -527,7 +527,7 @@ public:
                                         config_.epsilon,
                                         bsz,
                                         config_.hiddenDim,
-                                        SE->getStream(0),
+                                        *(SE->getStream(0)),
                                         preLayerNorm,
                                         config_.training,
                                         vars->get_device_data(),
@@ -579,6 +579,7 @@ int main(int argc, char *argv[])
     int sequence_length = atoi(argv[2]);
     int hidden_size = atoi(argv[3]);
     int nq = atoi(argv[4]);
+    printf("Read command line parameters\n");
     ScheduleEngine SE(nq);
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> input_norm(batch_size * sequence_length * hidden_size, &SE);
@@ -590,4 +591,5 @@ int main(int argc, char *argv[])
     Normalize<float> normalize_input(Normalize<float>::Config(batch_size , sequence_length, hidden_size, layernorm_eps,true));
     normalize_input.SetMeansAndVariance(&norm_mean,&norm_var);
     normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    printf("Executed normalize layer\n");
 }
