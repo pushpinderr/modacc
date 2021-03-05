@@ -397,6 +397,12 @@ class ScheduleEngine {
     CHECK_CUBLAS(cublasCreate(&handle));
     this->num_queues = num_queues;
     compute = (cudaStream_t *) malloc(num_queues * sizeof(cudaStream_t));
+    for(int i=0;i<num_queues;i++)
+    {
+        CHECK(cudaStreamCreate(&compute[i]));
+    }
+
+
    }
 
    ~ScheduleEngine() { delete compute; }
