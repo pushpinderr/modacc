@@ -452,14 +452,14 @@ class Buffer {
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&h, &d, get_size(),cudaMemcpyDeviceToHost, q[0]));
+      CHECK(cudaMemcpyAsync(h, d, get_size(),cudaMemcpyDeviceToHost, q[0]));
     }
 
     void copyH2D(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(&d, &h, get_size(), cudaMemcpyHostToDevice, q[0]));
+      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
     }
 
 
