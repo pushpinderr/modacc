@@ -584,3 +584,4 @@ int main(int argc, char *argv[])
     normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
     printf("Executed normalize layer\n");
 }
+// testing repo integrity
