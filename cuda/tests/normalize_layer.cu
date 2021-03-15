@@ -10,7 +10,8 @@
 #include <iostream>
 #include <cooperative_groups.h>
 #include <curand_kernel.h>
-#include<stdexcept>
+#include <stdexcept>
+
 namespace cg = cooperative_groups;
 
 
@@ -462,6 +463,20 @@ class Buffer {
       CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
     }
 
+    void copyD2H(cudaStream_t *q, int offset=0, int stream_index=0)
+    {
+      T *h = get_host_data(offset);
+      T *d = get_device_data(offset);
+      CHECK(cudaMemcpyAsync(h, d, get_size(), cudaMemcpyDeviceToHost, q[stream_index]));
+    }
+
+    void copyH2D(cudaStream_t *q, int offset=0)
+    {
+      T *h = get_host_data(offset);
+      T *d = get_device_data(offset);
+      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
+    }
+
 
   private:
     T *_host_data;
@@ -530,6 +545,48 @@ public:
         gamma->copyD2H(SE->compute);
         betta->copyD2H(SE->compute);
 
+
+    }
+
+    void ForwardCheckpointPartition(int bsz,  // batch * seq
+        int psz, // partition size
+        Buffer<T>* vals,
+        Buffer<T>* residual,
+        Buffer<T>* gamma,
+        Buffer<T>* betta,
+        ScheduleEngine* SE,
+        bool preLayerNorm = false)
+    {
+        uint32_t batch = Config->batchSize, uint32_t seq = Config->seqLength, uint32_t h = Config->hiddenDim;
+        int num_queues = (Config->batch_size / psz)+1;
+        for (int i = 0; i<num_queues; i++)
+        {
+            // calculate offset for each stream segment (not sure if h should be included)
+            int offset = i * (batch*seq*h); 
+            // schedule engine already creates streams so I don't think I need to add that here
+            vals->copyH2D(SE->compute, offset, i);
+            residual->copyH2D(SE->compute, offset, i);
+            gamma->copyH2D(SE->compute, offset, i);
+            betta->copyH2D(SE->compute, offset, i);
+
+            launch_bias_residual_layer_norm(vals->get_device_data(),
+                                residual->get_device_data(),
+                                gamma->get_device_data(),
+                                betta->get_device_data(),
+                                config_.epsilon,
+                                bsz,
+                                config_.hiddenDim,
+                                SE->compute,
+                                preLayerNorm,
+                                config_.training,
+                                vars->get_device_data(),
+                                means->get_device_data());
+            
+            vals->copyD2H(SE->compute, offset, i);
+            residual->copyD2H(SE->compute, offset, i);
+            gamma->copyD2H(SE->compute, offset, i);
+            betta->copyD2H(SE->compute, offset, i);
+        }
 
     }
 
