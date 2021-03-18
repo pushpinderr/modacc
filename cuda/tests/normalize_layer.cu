@@ -1,3 +1,4 @@
+// %%cuda --name NormalizeLayer.cu
 #include <stdio.h>
 #include <cuda.h>
 #include <assert.h>
@@ -17,6 +18,7 @@ namespace cg = cooperative_groups;
 
 #define MAX_THREADS 1024
 #define THREADS 256
+#define DEBUG true // added a flag to turn off prinitng apart from testing
 
 #define MAX_THREAD_STRIDE 32
 #define TILE_DIM 32
@@ -251,7 +253,8 @@ void launch_bias_residual_layer_norm(T* vals,
                                      bool preLayerNorm,
                                      bool training,
                                      T* vars,
-                                     T* means);
+                                     T* means,
+                                     int q_index);
 
 template <>
 void launch_bias_residual_layer_norm<float>(float* vals,
@@ -265,7 +268,8 @@ void launch_bias_residual_layer_norm<float>(float* vals,
                                             bool preLayerNorm,
                                             bool training,
                                             float* vars,
-                                            float* means)
+                                            float* means,
+                                            int q_index)
 {
     int threads = THREADS;
 
@@ -280,7 +284,9 @@ void launch_bias_residual_layer_norm<float>(float* vals,
 
     dim3 block_dim(threads);
 
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[0]>>>(
+    if (DEBUG) 
+        std::cout << "launching bias residual layer norm, with stream_index=" << q_index << std::endl;
+    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim);
 }
 
@@ -296,7 +302,8 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
                                              bool preLayerNorm,
                                              bool training,
                                              __half* vars,
-                                             __half* means)
+                                             __half* means,
+                                             int q_index)
 {
     int threads = 128;
 
@@ -312,8 +319,9 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
         throw std::runtime_error("Unsupport hidden_dim.");
 
     dim3 block_dim(threads);
-
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[0]>>>(
+    // if (DEBUG)
+    //     std::cout << "queue_index=" << queue_index << " offset=" << offset << std::endl;
+    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim / 2);
 }
 
@@ -424,7 +432,7 @@ class Buffer {
         printf("Creating host data\n");
         CHECK(cudaMallocHost((void **)&_host_data, sizeof(T)*num_elements));
         printf("Creating device data\n");
-       CHECK(cudaMalloc((void **)&_device_data, sizeof(T)*num_elements));
+        CHECK(cudaMalloc((void **)&_device_data, sizeof(T)*num_elements));
         printf("Initializing host data\n");
         init_ones();
         printf("Finished creating Buffer\n");
@@ -435,6 +443,7 @@ class Buffer {
     T *get_device_data(int offset) { return _device_data + offset; }
 
     size_t get_size() { return sizeof(T) * num_elements; }
+    size_t get_size(int nq) { return sizeof(T) * (num_elements/nq); }
     int get_num_elements() { return num_elements; }
 
     ~Buffer() {}
@@ -443,6 +452,14 @@ class Buffer {
         for (int i = 0; i < num_elements; i++)
             _host_data[i] = 1;
     }
+
+    // void read_input() {
+    //     for (int i = 0; i)
+    // }
+
+    // void write_output() {
+
+    // }
 
     void print_host_data() {
         for (int i = 0; i < num_elements; i++)
@@ -463,20 +480,19 @@ class Buffer {
       CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
     }
 
-    void copyD2H(cudaStream_t *q, int offset=0, int stream_index=0)
+    void copyD2H(cudaStream_t *q, int offset, int nq, int q_index)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(h, d, get_size(), cudaMemcpyDeviceToHost, q[stream_index]));
+      CHECK(cudaMemcpyAsync(h, d, get_size(nq), cudaMemcpyDeviceToHost, q[q_index]));
     }
 
-    void copyH2D(cudaStream_t *q, int offset=0)
+    void copyH2D(cudaStream_t *q, int offset, int nq, int q_index)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
+      CHECK(cudaMemcpyAsync(d, h, get_size(nq), cudaMemcpyHostToDevice, q[q_index]));
     }
-
 
   private:
     T *_host_data;
@@ -537,19 +553,20 @@ public:
                                         preLayerNorm,
                                         config_.training,
                                         vars->get_device_data(),
-                                        means->get_device_data());
+                                        means->get_device_data(),
+                                        0);
 
 
         vals->copyD2H(SE->compute);
-        residual->copyD2H(SE->compute);
-        gamma->copyD2H(SE->compute);
-        betta->copyD2H(SE->compute);
+        // residual->copyD2H(SE->compute);
+        // gamma->copyD2H(SE->compute);
+        // betta->copyD2H(SE->compute);
 
 
     }
 
     void ForwardCheckpointPartition(int bsz,  // batch * seq
-        int psz, // partition size
+        int nq, // number of queues
         Buffer<T>* vals,
         Buffer<T>* residual,
         Buffer<T>* gamma,
@@ -557,20 +574,27 @@ public:
         ScheduleEngine* SE,
         bool preLayerNorm = false)
     {
-        uint32_t batch = Config->batchSize, uint32_t seq = Config->seqLength, uint32_t h = Config->hiddenDim;
-        int num_queues = (Config->batch_size / psz)+1;
-        for (int i = 0; i<num_queues; i++)
-        {
-            // calculate offset for each stream segment (not sure if h should be included)
-            int offset = i * (batch*seq*h); 
-            // schedule engine already creates streams so I don't think I need to add that here
-            vals->copyH2D(SE->compute, offset, i);
-            residual->copyH2D(SE->compute, offset, i);
-            gamma->copyH2D(SE->compute, offset, i);
-            betta->copyH2D(SE->compute, offset, i);
+        uint32_t batch_size = config_.batchSize; 
+        uint32_t sequence_length = config_.seqLength; 
+        uint32_t hidden_size = config_.hiddenDim;
+     
+        int offset = 0;
+        int partition_size = (batch_size / nq);
+        gamma->copyH2D(SE->compute);
+        betta->copyH2D(SE->compute);    
+        std::cout << "creating queues" << std::endl;
 
-            launch_bias_residual_layer_norm(vals->get_device_data(),
-                                residual->get_device_data(),
+        for (int i = 0; i<nq; i++)
+        {
+            offset = i * partition_size * sequence_length * hidden_size; 
+    
+            vals->copyH2D(SE->compute, offset, nq, i);
+            residual->copyH2D(SE->compute, offset, nq, i);
+            if (DEBUG)
+                std::cout << "queue_index=" << i << " offset=" << offset << std::endl;
+
+            launch_bias_residual_layer_norm(vals->get_device_data(offset),
+                                residual->get_device_data(offset),
                                 gamma->get_device_data(),
                                 betta->get_device_data(),
                                 config_.epsilon,
@@ -580,15 +604,15 @@ public:
                                 preLayerNorm,
                                 config_.training,
                                 vars->get_device_data(),
-                                means->get_device_data());
+                                means->get_device_data(),
+                                i);
             
-            vals->copyD2H(SE->compute, offset, i);
-            residual->copyD2H(SE->compute, offset, i);
-            gamma->copyD2H(SE->compute, offset, i);
-            betta->copyD2H(SE->compute, offset, i);
+            vals->copyD2H(SE->compute, offset, nq, i);
+            residual->copyD2H(SE->compute, offset, nq, i);
         }
 
     }
+
 
     inline bool UseMean() const { return config_.useMean; }
 
@@ -622,12 +646,18 @@ private:
 
 int main(int argc, char *argv[])
 {
-  
+    // PLEASE NOTE: number of queues must be less than batch_size
     int batch_size = atoi(argv[1]);
     int sequence_length = atoi(argv[2]);
     int hidden_size = atoi(argv[3]);
     int nq = atoi(argv[4]);
+ 
+    std::cout << "batch size=" << batch_size << std::endl;
+    std::cout << "sequence length=" << sequence_length << std::endl;
+    std::cout << "hidden layer size =" << hidden_size << std::endl;
+    std::cout << "number of queues =" << nq << std::endl;
     printf("Read command line parameters\n");
+ 
     ScheduleEngine SE(nq);
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> input_norm(batch_size * sequence_length * hidden_size, &SE);
@@ -638,7 +668,7 @@ int main(int argc, char *argv[])
     float layernorm_eps=0.000001; 
     Normalize<float> normalize_input(Normalize<float>::Config(batch_size , sequence_length, hidden_size, layernorm_eps,true));
     normalize_input.SetMeansAndVariance(&norm_mean,&norm_var);
-    normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    // normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
     printf("Executed normalize layer\n");
 }
-// testing repo integrity
