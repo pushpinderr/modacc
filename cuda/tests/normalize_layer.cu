@@ -462,6 +462,21 @@ class Buffer {
       CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
     }
 
+    void copyD2H(cudaStream_t *q, int queue_id, int offset=0)
+    {
+      T *h = get_host_data(offset);
+      T *d = get_device_data(offset);
+      CHECK(cudaMemcpyAsync(h, d, get_size(),cudaMemcpyDeviceToHost, q[queue_id]));
+    }
+
+    void copyH2D(cudaStream_t *q, int queue_id, int offset=0)
+    {
+      T *h = get_host_data(offset);
+      T *d = get_device_data(offset);
+      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[queue_id]));
+    }
+
+
 
   private:
     T *_host_data;
@@ -497,7 +512,7 @@ public:
 
     ~Normalize() {}
 
-    void ForwardCheckpoint(int bsz,  // batch * seq
+void ForwardCheckpointFineGrained(int bsz,  // batch * seq
                            Buffer<T>* vals,
                            Buffer<T>* residual,
                            Buffer<T>* gamma,
@@ -506,7 +521,7 @@ public:
                            bool preLayerNorm = false)
     {
          
-        vals->copyH2D(SE->compute);
+        //vals->copyH2D(SE->compute);
         residual->copyH2D(SE->compute);
         gamma->copyH2D(SE->compute);
         betta->copyH2D(SE->compute);
@@ -526,9 +541,49 @@ public:
 
 
         vals->copyD2H(SE->compute);
-        residual->copyD2H(SE->compute);
-        gamma->copyD2H(SE->compute);
-        betta->copyD2H(SE->compute);
+        //residual->copyD2H(SE->compute);
+        //gamma->copyD2H(SE->compute);
+        //betta->copyD2H(SE->compute);
+
+
+    }
+
+
+    void ForwardCheckpoint(int bsz,  // batch * seq
+                           Buffer<T>* vals,
+                           Buffer<T>* residual,
+                           Buffer<T>* gamma,
+                           Buffer<T>* betta,
+                           ScheduleEngine* SE,
+                           bool preLayerNorm = false)
+    {
+         
+//        vals->copyH2D(SE->compute);
+        residual->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute);
+        betta->copyH2D(SE->compute);
+
+        launch_bias_residual_layer_norm(vals->get_device_data(),
+                                        residual->get_device_data(),
+                                        gamma->get_device_data(),
+                                        betta->get_device_data(),
+                                        config_.epsilon,
+                                        bsz,
+                                        config_.hiddenDim,
+                                        SE->compute,
+                                        preLayerNorm,
+                                        config_.training,
+                                        vars->get_device_data(),
+                                        means->get_device_data());
+
+
+        vals->copyD2H(SE->compute);
+        vars->copyD2H(SE->compute);
+        means->copyD2H(SE->compute);
+
+//        residual->copyD2H(SE->compute);
+//        gamma->copyD2H(SE->compute);
+//        betta->copyD2H(SE->compute);
 
 
     }
