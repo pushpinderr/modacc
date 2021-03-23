@@ -361,10 +361,14 @@ Forward	cuda/include/normalize_layer.h	/^    void Forward(int bsz,$/;"	f	class:N
 Forward	cuda/include/softmax.h	/^    void Forward(int bsz, T* vals, const T* attn_mask, cudaStream_t& stream)$/;"	f	class:Softmax
 Forward	cuda/include/strided_batch_gemm.h	/^    void Forward(int bsz, T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
 Forward	cuda/src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::Forward($/;"	f	class:BertTransformerLayer
-Forward	dpcpp/tests/test_engine.cpp	/^    void Forward(Buffer<T> *input_ptr, Buffer<T> *weights, Buffer<T> *out,$/;"	f	class:FeedForward
+Forward	dpcpp/tests/test_engine.cpp	/^void Forward(Buffer<T> *input_ptr, Buffer<T> *weights, Buffer<T> *out,$/;"	f	class:FeedForward
 ForwardCheckpoint	cuda/include/normalize_layer.h	/^    void ForwardCheckpoint(int bsz,  \/\/ batch * seq$/;"	f	class:Normalize_Layer
 ForwardPartitionWeights	dpcpp/include/feed_forward.h	/^    void ForwardPartitionWeights(int bsz, const T *input_ptr, const T *weights,$/;"	f	class:FeedForward
 ForwardPartitionWeights	dpcpp/tests/test_engine.cpp	/^    void ForwardPartitionWeights(Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
+ForwardPartitionWeightsAsync	dpcpp/tests/test_engine.cpp	/^void ForwardPartitionWeightsAsync(Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
+ForwardPartitionWeightsBFS	dpcpp/tests/test_engine.cpp	/^    void ForwardPartitionWeightsBFS(Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
+ForwardPartitionWeightsWaitAsync	dpcpp/tests/test_engine.cpp	/^    void ForwardPartitionWeightsWaitAsync(Buffer<T> *input_ptr,$/;"	f	class:FeedForward
+ForwardPartitionWeights_CPU_GPU	dpcpp/tests/test_engine.cpp	/^void ForwardPartitionWeights_CPU_GPU(Buffer<T> *input_ptr, Buffer<T> *weights,$/;"	f	class:FeedForward
 ForwardPlusSave	cuda/include/strided_batch_gemm.h	/^    void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
 ForwardWithBias	cuda/include/dropout.h	/^    void ForwardWithBias(int bsz, T* vals, const T* bias, cudaStream_t stream)$/;"	f	class:Dropout
 ForwardWithBias	cuda/include/dropout.h	/^    void ForwardWithBias(int bsz,$/;"	f	class:Dropout
@@ -426,6 +430,7 @@ MAX_THREAD_STRIDE	cuda/include/custom_cuda_layers.h	17;"	d
 MAX_WARP_NUM	cuda/include/custom_cuda_layers.h	23;"	d
 N	cuda/include/gemm_test.h	/^    int M, N, K;$/;"	m	class:GemmTest
 N	cuda/include/gemm_test.h	/^    int bsz, M, N, K;$/;"	m	class:StridedGemmTest
+NUM_ITER	dpcpp/tests/test_engine.cpp	9;"	d	file:
 NVCC	cuda/Makefile	/^NVCC=nvcc$/;"	m
 Normalize_Layer	cuda/include/normalize_layer.h	/^    Normalize_Layer(Config config)$/;"	f	class:Normalize_Layer
 Normalize_Layer	cuda/include/normalize_layer.h	/^class Normalize_Layer {$/;"	c
@@ -623,6 +628,7 @@ _config	cuda/include/gelu.h	/^    Config _config;$/;"	m	class:Gelu
 _config	cuda/include/strided_batch_gemm.h	/^    Config _config;$/;"	m	class:StridedBatchGemm
 _context	dpcpp/include/ScheduleEngine.h	/^    context _context;$/;"	m	class:ScheduleEngine
 _context	dpcpp/tests/test_engine.cpp	/^    context _context;$/;"	m	class:ScheduleEngine	file:
+_context_cpu	dpcpp/tests/test_engine.cpp	/^    context _context_cpu;$/;"	m	class:ScheduleEngine	file:
 _cublasHandle	cuda/include/context.h	/^    cublasHandle_t _cublasHandle;$/;"	m	class:Context
 _cublasHandle	cuda/include/ds_transformer_cuda.h	/^    cublasHandle_t _cublasHandle;$/;"	m	class:BertTransformerLayer
 _curr_offset	cuda/include/context.h	/^    uint64_t _curr_offset;$/;"	m	class:Context
@@ -630,6 +636,7 @@ _device_data	dpcpp/include/Buffer.h	/^    T *_device_data;$/;"	m	class:Buffer
 _device_data	dpcpp/tests/test_engine.cpp	/^    T *_device_data;$/;"	m	class:Buffer	file:
 _devices	dpcpp/include/ScheduleEngine.h	/^    std::vector<device> _devices;$/;"	m	class:ScheduleEngine
 _devices	dpcpp/tests/test_engine.cpp	/^    std::vector<device> _devices;$/;"	m	class:ScheduleEngine	file:
+_devices_cpu	dpcpp/tests/test_engine.cpp	/^    std::vector<device> _devices_cpu;$/;"	m	class:ScheduleEngine	file:
 _doubled_buffer	cuda/include/cpu_adam.h	/^    float* _doubled_buffer[2];$/;"	m	class:Adam_Optimizer
 _eps	cuda/include/cpu_adam.h	/^    float _eps;$/;"	m	class:Adam_Optimizer
 _ff1	cuda/include/ds_transformer_cuda.h	/^    FeedForward<T> _ff1, _ff2;$/;"	m	class:BertTransformerLayer
@@ -653,6 +660,7 @@ _pre_or_postLayerNorm	cuda/include/ds_transformer_cuda.h	/^    bool _pre_or_post
 _qkv_linear	cuda/include/ds_transformer_cuda.h	/^    FeedForward<T> _qkv_linear;$/;"	m	class:BertTransformerLayer
 _queues	dpcpp/include/ScheduleEngine.h	/^    std::vector<queue> _queues;$/;"	m	class:ScheduleEngine
 _queues	dpcpp/tests/test_engine.cpp	/^    std::vector<queue> _queues;$/;"	m	class:ScheduleEngine	file:
+_queues_cpu	dpcpp/tests/test_engine.cpp	/^    std::vector<queue> _queues_cpu;$/;"	m	class:ScheduleEngine	file:
 _seed	cuda/include/context.h	/^    uint64_t _seed;$/;"	m	class:Context
 _seq_length	cuda/include/ds_transformer_cuda.h	/^    int _seq_length;$/;"	m	class:BertTransformerLayer
 _size_per_head	cuda/include/ds_transformer_cuda.h	/^    int _size_per_head;$/;"	m	class:BertTransformerLayer
@@ -681,16 +689,19 @@ check_cuda_error	cuda/include/gemm_test.h	24;"	d
 config_	cuda/include/feed_forward.h	/^    Config config_;$/;"	m	class:FeedForward
 config_	cuda/include/normalize_layer.h	/^    Config config_;$/;"	m	class:Normalize_Layer
 config_	cuda/include/softmax.h	/^    Config config_;$/;"	m	class:Softmax
-config_	dpcpp/tests/test_engine.cpp	/^    Config config_;$/;"	m	class:FeedForward	file:
+config_	dpcpp/tests/test_engine.cpp	/^Config config_;$/;"	m	class:FeedForward	file:
 const	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	10;"	d	file:
 create_transformer_layer	cuda/src/ds_transformer_cuda.cpp	/^int create_transformer_layer(int layer_id, int batch_size, int hidden_dim,$/;"	f
 data	cuda/include/cpu_adam.h	/^        __m512 data;$/;"	m	union:Adam_Optimizer::AVX_Data
+device_type	dpcpp/tests/test_engine.cpp	/^    int device_type;$/;"	m	class:ScheduleEngine	file:
 dim	cuda/include/dropout.h	/^        uint32_t dim;$/;"	m	struct:Dropout::Config
 ds_transformer_backward	cuda/src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_backward($/;"	f
 ds_transformer_forward	cuda/src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_forward($/;"	f
 epsilon	cuda/include/normalize_layer.h	/^        float epsilon;$/;"	m	struct:Normalize_Layer::Config
 exceptionHandler	dpcpp/tests/test_ce.cpp	/^void exceptionHandler(sycl::exception_list exceptions) {$/;"	f
 exceptionHandler	dpcpp/tests/test_engine.cpp	/^void exceptionHandler(sycl::exception_list exceptions) {$/;"	f
+execute	dpcpp/tests/test_engine.cpp	/^    std::vector<event> execute;$/;"	m	class:ScheduleEngine	file:
+execute_cpu	dpcpp/tests/test_engine.cpp	/^    std::vector<event> execute_cpu;$/;"	m	class:ScheduleEngine	file:
 features	cuda/build/CMakeFiles/feature_tests.c	/^  const char features[] = {"\\n"$/;"	v
 features	cuda/build/CMakeFiles/feature_tests.cxx	/^  const char features[] = {"\\n"$/;"	v
 filename	cuda/scripts/plot_speedups.py	/^            filename = ".\/plots\/"+filename[:-4]+".pdf"$/;"	v
@@ -800,7 +811,9 @@ outputSize	dpcpp/tests/test_engine.cpp	/^        int batchSize, outputSize;$/;"	
 plot_bar	cuda/scripts/plot_speedups.py	/^def plot_bar(filename):$/;"	f
 plot_line	cuda/scripts/plot_speedups.py	/^def plot_line(filename):$/;"	f
 print	cuda/include/common.h	/^void print(float *input, int num_elements)$/;"	f
+print_cpu_gpu_event_info	dpcpp/tests/test_engine.cpp	/^    void print_cpu_gpu_event_info() {$/;"	f	class:ScheduleEngine
 print_engine_info	dpcpp/tests/test_engine.cpp	/^    void print_engine_info() {$/;"	f	class:ScheduleEngine
+print_event_info	dpcpp/tests/test_engine.cpp	/^    void print_event_info(int device, const char *dispatch_mechanism) {$/;"	f	class:ScheduleEngine
 print_host_data	dpcpp/tests/test_engine.cpp	/^    void print_host_data() {$/;"	f	class:Buffer
 prob_depth	cuda/include/softmax.h	/^        size_t prob_depth;$/;"	m	struct:Softmax::Config
 q_buf	cuda/include/strided_batch_gemm.h	/^    const T* q_buf;$/;"	m	class:StridedBatchGemm
@@ -809,6 +822,7 @@ qnxnto	cuda/build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char 
 rand_uniform	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^float rand_uniform()$/;"	f
 rand_uniform	dpcpp/src/matmul.cpp	/^float rand_uniform()$/;"	f
 ratio	cuda/include/dropout.h	/^        float ratio;$/;"	m	struct:Dropout::Config
+reads	dpcpp/tests/test_engine.cpp	/^    std::vector<event> reads;$/;"	m	class:ScheduleEngine	file:
 reduce_block_into_lanes	cuda/include/type_shim.h	/^reduce_block_into_lanes(T* x,$/;"	f
 restart	cuda/include/common.h	/^    void restart()$/;"	f	class:Stopwatch
 restart	dpcpp/src/.ipynb_checkpoints/matmul-checkpoint.cpp	/^    void restart()$/;"	f	class:Stopwatch
@@ -853,6 +867,7 @@ verify_result	dpcpp/src/.ipynb_checkpoints/matmul_finegrained-checkpoint.cpp	/^b
 verify_result	dpcpp/src/matmul.cpp	/^bool verify_result(int m, int n, int k, int ldc, float *C, float *C_reference)$/;"	f
 verify_result	dpcpp/src/matmul_finegrained.cpp	/^bool verify_result(int m, int n, int k, int ldc, float *C, float *C_reference)$/;"	f
 volatile	cuda/build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	11;"	d	file:
+writes	dpcpp/tests/test_engine.cpp	/^    std::vector<event> writes;$/;"	m	class:ScheduleEngine	file:
 x	cuda/scripts/plot_speedups.py	/^        x=[2,4,8,12,16]$/;"	v
 y	cuda/scripts/plot_speedups.py	/^        y = []$/;"	v
 ~Adam_Optimizer	cuda/include/cpu_adam.h	/^    ~Adam_Optimizer()$/;"	f	class:Adam_Optimizer
