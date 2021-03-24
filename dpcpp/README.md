@@ -17,8 +17,9 @@ Build and Run
 GEMM Tests
 --------------
 * The code test_engine.cpp located inside dpcpp/tests runs the oneMKL GEMM kernel on both CPU and GPU devices multiple number of times and profiles execution using the events API in DPC++. The objective of this test is to evaluate the performance of i) fine grained scheduling i.e. partitioning the computation of GEMM by using multiple queues for the same device and ii) partitioning GEMM computationg acorss a single CPU and a single GPU device. The corresponding functions involved are
-..1. ForwardPartitionWeights: Fine grained scheduling
-..2. ForwardPartitionWeights_CPU_GPU: Partitioned CPU/GPU execution
+
+  1. ForwardPartitionWeights: Fine grained scheduling
+  2. ForwardPartitionWeights_CPU_GPU: Partitioned CPU/GPU execution
 * Change directory to modacc/dpcpp.
 * For compiling run bash build.sh. This would run the script build_test.sh located inside the scripts folder. The compute node to which this script would be launched is specified in the build.sh file located inside dpcpp folder.  
 * For executing run bash run.sh. This would run the script run_test.sh located inside the scripts folder. The run_test.sh file contains a list of commands pertaining to the following format.
