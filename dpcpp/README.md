@@ -1,20 +1,4 @@
-Overview
------------
-
-The repository currently comprises the required source code for a streaming implementation of MKL GEMM 
-The main source file under question is matmul_finegrained.cpp inside src directory. 
-
-
-Build and Run
---------------
-* Change directory to modacc/dpcpp.
-* For compiling run bash scripts/build_matmul.sh.
-* For executing run bash run.sh.
-
-
-
-
-GEMM Tests
+GEMM Experiments 
 --------------
 * The code test_engine.cpp located inside dpcpp/tests runs the oneMKL GEMM kernel on both CPU and GPU devices multiple number of times and profiles execution using the events API in DPC++. The objective of this test is to evaluate the performance of i) fine grained scheduling i.e. partitioning the computation of GEMM by using multiple queues for the same device and ii) partitioning GEMM computationg acorss a single CPU and a single GPU device. The corresponding functions involved are
 
