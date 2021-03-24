@@ -1,0 +1,751 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+A	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:GemmTest
+A	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:StridedGemmTest
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	416;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	419;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	422;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	425;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	429;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	431;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	433;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	437;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	440;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	443;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	448;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	451;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	454;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	459;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	462;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	465;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	468;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	401;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	404;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	407;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	410;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	414;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	416;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	418;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	422;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	425;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	428;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	433;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	436;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	439;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	444;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	447;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	450;"	d	file:
+ARCHITECTURE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	453;"	d	file:
+AVX_Data	include/cpu_adam.h	/^    union AVX_Data {$/;"	u	class:Adam_Optimizer
+Adam_Optimizer	include/cpu_adam.h	/^    Adam_Optimizer(float alpha = 1e-3,$/;"	f	class:Adam_Optimizer
+Adam_Optimizer	include/cpu_adam.h	/^class Adam_Optimizer {$/;"	c
+B	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:GemmTest
+B	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:StridedGemmTest
+Backward	include/dropout.h	/^    void Backward(int bsz, T* d_vals, cudaStream_t stream)$/;"	f	class:Dropout
+Backward	include/dropout.h	/^    void Backward(int bsz, T* d_vals_out, const T* d_vals, cudaStream_t stream)$/;"	f	class:Dropout
+Backward	include/feed_forward.h	/^    void Backward(int bsz,$/;"	f	class:FeedForward
+Backward	include/gelu.h	/^    void Backward(int bsz, T *d_output, const T *input_buf, const T *bias,$/;"	f	class:Gelu
+Backward	include/normalize_layer.h	/^    void Backward(int bsz,$/;"	f	class:Normalize_Layer
+Backward	include/softmax.h	/^    void Backward(int bsz, T* out_grad, const T* soft_out, cudaStream_t stream)$/;"	f	class:Softmax
+Backward	include/strided_batch_gemm.h	/^    void Backward(int bsz,$/;"	f	class:StridedBatchGemm
+Backward	src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::Backward($/;"	f	class:BertTransformerLayer
+BackwardFusedAdd	include/normalize_layer.h	/^    void BackwardFusedAdd(int bsz,$/;"	f	class:Normalize_Layer
+BertGemmAlgos	include/ds_transformer_cuda.h	/^    BertGemmAlgos()$/;"	f	struct:BertGemmAlgos
+BertGemmAlgos	include/ds_transformer_cuda.h	/^struct BertGemmAlgos {$/;"	s
+BertTransformerLayer	include/ds_transformer_cuda.h	/^class BertTransformerLayer {$/;"	c
+BertTransformerLayer	src/ds_transformer_cuda.cpp	/^BertTransformerLayer<T>::BertTransformerLayer($/;"	f	class:BertTransformerLayer
+C	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:GemmTest
+C	include/gemm_test.h	/^    T *A, *B, *C;$/;"	m	class:StridedGemmTest
+CFLAGS	Makefile	/^CFLAGS=-I$(INCLUDE_DIR)$/;"	m
+CHECK	include/common.h	10;"	d
+CHECK_CONTIGUOUS	src/ds_transformer_cuda.cpp	37;"	d	file:
+CHECK_CUBLAS	include/common.h	21;"	d
+CHECK_CUDA	src/ds_transformer_cuda.cpp	35;"	d	file:
+CHECK_INPUT	src/ds_transformer_cuda.cpp	39;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	101;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	108;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	115;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	122;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	129;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	137;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	142;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	149;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	152;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	155;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	158;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	161;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	176;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	190;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	19;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	200;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	218;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	227;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	236;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	251;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	264;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	282;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	285;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	288;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	42;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	50;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	56;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	62;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	71;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	80;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	94;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	101;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	108;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	115;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	122;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	129;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	137;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	13;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	142;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	149;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	152;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	155;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	170;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	184;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	198;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	19;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	216;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	225;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	234;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	249;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	267;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	270;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	273;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	42;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	50;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	56;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	62;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	71;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	80;"	d	file:
+COMPILER_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	94;"	d	file:
+COMPILER_VERSION_INTERNAL	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	232;"	d	file:
+COMPILER_VERSION_INTERNAL	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	230;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	103;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	110;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	117;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	124;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	130;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	138;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	144;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	165;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	180;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	191;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	202;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	221;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	229;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	239;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	244;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	24;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	253;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	258;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	267;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	272;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	43;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	51;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	58;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	64;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	73;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	83;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	88;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	96;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	103;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	110;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	117;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	124;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	130;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	138;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	144;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	159;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	15;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	174;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	186;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	188;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	200;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	219;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	227;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	237;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	242;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	24;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	252;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	257;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	43;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	51;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	58;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	64;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	73;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	83;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	88;"	d	file:
+COMPILER_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	96;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	104;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	111;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	118;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	125;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	131;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	139;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	145;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	166;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	181;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	193;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	203;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	222;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	230;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	240;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	245;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	254;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	259;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	25;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	268;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	273;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	44;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	52;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	59;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	65;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	74;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	84;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	89;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	97;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	104;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	111;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	118;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	125;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	131;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	139;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	145;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	160;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	16;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	175;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	191;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	201;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	220;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	228;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	238;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	243;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	253;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	258;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	25;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	44;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	52;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	59;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	65;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	74;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	84;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	89;"	d	file:
+COMPILER_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	97;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	105;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	112;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	119;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	126;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	133;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	146;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	167;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	182;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	196;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	207;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	210;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	223;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	231;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	241;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	246;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	255;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	260;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	269;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	274;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	27;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	29;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	46;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	53;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	67;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	76;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	85;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	90;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	98;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	105;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	112;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	119;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	126;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	133;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	146;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	161;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	176;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	194;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	205;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	208;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	221;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	229;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	239;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	244;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	254;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	259;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	27;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	29;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	46;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	53;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	67;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	76;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	85;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	90;"	d	file:
+COMPILER_VERSION_PATCH	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	98;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	173;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	214;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	33;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	167;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	212;"	d	file:
+COMPILER_VERSION_TWEAK	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	33;"	d	file:
+CPUTimer	include/Timer.h	/^    CPUTimer() : start(std::chrono::high_resolution_clock::now()) {}$/;"	f	class:CPUTimer
+CPUTimer	include/Timer.h	/^class CPUTimer {$/;"	c
+CUDA_1D_KERNEL_LOOP	include/context.h	24;"	d
+CUDA_2D_KERNEL_LOOP	include/context.h	27;"	d
+CUDA_CHECK	include/context.h	15;"	d
+CUDA_CHECK	include/cpu_adam.h	14;"	d
+CXX_STD	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	534;"	d	file:
+CXX_STD	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	536;"	d	file:
+C_DIALECT	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	550;"	d	file:
+C_DIALECT	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	552;"	d	file:
+C_DIALECT	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	555;"	d	file:
+C_DIALECT	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	557;"	d	file:
+C_DIALECT	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	559;"	d	file:
+Config	include/dropout.h	/^        Config(float r, uint32_t d) : ratio(r), dim(d), training(true) {}$/;"	f	struct:Dropout::Config
+Config	include/dropout.h	/^    struct Config {$/;"	s	class:Dropout
+Config	include/feed_forward.h	/^        Config(int batch, int outputs, int inputs, const std::array<int, 3>& algos)$/;"	f	struct:FeedForward::Config
+Config	include/feed_forward.h	/^    struct Config {$/;"	s	class:FeedForward
+Config	include/gelu.h	/^        Config(uint32_t inter_size) : intermediate_size(inter_size) {}$/;"	f	struct:Gelu::Config
+Config	include/gelu.h	/^    struct Config {$/;"	s	class:Gelu
+Config	include/normalize_layer.h	/^        Config(uint32_t batch, uint32_t seq, uint32_t h, bool training, bool useMean = true)$/;"	f	struct:Normalize_Layer::Config
+Config	include/normalize_layer.h	/^    struct Config {$/;"	s	class:Normalize_Layer
+Config	include/softmax.h	/^        Config(size_t batch, size_t h, size_t seq, int prob_size = 0, bool mem_alloc = false)$/;"	f	struct:Softmax::Config
+Config	include/softmax.h	/^    struct Config {$/;"	s	class:Softmax
+Config	include/strided_batch_gemm.h	/^        Config(int batch,$/;"	f	struct:StridedBatchGemm::Config
+Config	include/strided_batch_gemm.h	/^    struct Config {$/;"	s	class:StridedBatchGemm
+Context	include/context.h	/^    Context() : _workspace(nullptr), _seed(42), _curr_offset(0)$/;"	f	class:Context
+Context	include/context.h	/^class Context {$/;"	c
+DEC	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	472;"	d	file:
+DEC	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	457;"	d	file:
+DISPATCH_DOUBLE_AND_FLOAT	include/type_shim.h	52;"	d
+DISPATCH_DOUBLE_FLOAT_AND_HALF	include/type_shim.h	32;"	d
+DISPATCH_FLOAT_AND_HALF	include/type_shim.h	17;"	d
+DS_CUDA_NUM_THREADS	include/context.h	31;"	d
+DS_GET_BLOCKS	include/context.h	/^inline int DS_GET_BLOCKS(const int N)$/;"	f
+DS_MAXIMUM_NUM_BLOCKS	include/context.h	32;"	d
+Dropout	include/dropout.h	/^    Dropout(const Config& config) : _config(config), _mask(nullptr) {}$/;"	f	class:Dropout
+Dropout	include/dropout.h	/^class Dropout {$/;"	c
+Elapsed	include/Timer.h	/^    inline float Elapsed()$/;"	f	class:CPUTimer
+Elapsed	include/Timer.h	/^    inline void Elapsed(float& time_elapsed)$/;"	f	class:GPUTimer
+FINAL_MASK	include/general_kernels.h	17;"	d
+FeedForward	include/feed_forward.h	/^    FeedForward(Config config) : config_(config) {}$/;"	f	class:FeedForward
+FeedForward	include/feed_forward.h	/^class FeedForward {$/;"	c
+Forward	include/dropout.h	/^    void Forward(int bsz, T* out, const T* vals, cudaStream_t stream, bool bwd = false)$/;"	f	class:Dropout
+Forward	include/feed_forward.h	/^    void Forward(int bsz,$/;"	f	class:FeedForward
+Forward	include/normalize_layer.h	/^    void Forward(int bsz,$/;"	f	class:Normalize_Layer
+Forward	include/softmax.h	/^    void Forward(int bsz, T* vals, const T* attn_mask, cudaStream_t& stream)$/;"	f	class:Softmax
+Forward	include/strided_batch_gemm.h	/^    void Forward(int bsz, T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
+Forward	src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::Forward($/;"	f	class:BertTransformerLayer
+ForwardCheckpoint	include/normalize_layer.h	/^    void ForwardCheckpoint(int bsz,  \/\/ batch * seq$/;"	f	class:Normalize_Layer
+ForwardPlusSave	include/strided_batch_gemm.h	/^    void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)$/;"	f	class:StridedBatchGemm
+ForwardWithBias	include/dropout.h	/^    void ForwardWithBias(int bsz, T* vals, const T* bias, cudaStream_t stream)$/;"	f	class:Dropout
+ForwardWithBias	include/dropout.h	/^    void ForwardWithBias(int bsz,$/;"	f	class:Dropout
+ForwardWithBiasAdd	include/gelu.h	/^    void ForwardWithBiasAdd(int bsz, const T *input_buf, const T *bias,$/;"	f	class:Gelu
+GPUTimer	include/Timer.h	/^    GPUTimer()$/;"	f	class:GPUTimer
+GPUTimer	include/Timer.h	/^class GPUTimer {$/;"	c
+Gelu	include/gelu.h	/^    Gelu(const Config &config) : _config(config) {}$/;"	f	class:Gelu
+Gelu	include/gelu.h	/^template <typename T> class Gelu {$/;"	c
+GeluCheckpoint	include/ds_transformer_cuda.h	/^    inline bool GeluCheckpoint() const { return _gelu_checkpoint; }$/;"	f	class:BertTransformerLayer
+GemmConfig	include/gemm.h	/^    GemmConfig(cublasOperation_t trans_A, cublasOperation_t trans_B, int batch, int sequence_length, int hidden_size, float a, float b)$/;"	f	struct:GemmConfig
+GemmConfig	include/gemm.h	/^struct GemmConfig$/;"	s
+GemmTest	include/gemm_test.h	/^    GemmTest(int m, int n, int k, cublasOperation_t ta, cublasOperation_t tb, cublasHandle_t h)$/;"	f	class:GemmTest
+GemmTest	include/gemm_test.h	/^class GemmTest {$/;"	c
+GetBatchSize	include/ds_transformer_cuda.h	/^    inline int GetBatchSize() const { return _batch_size; }$/;"	f	class:BertTransformerLayer
+GetBatchSize	include/softmax.h	/^    inline size_t GetBatchSize() const { return config_.batchSize; }$/;"	f	class:Softmax
+GetBufferA	include/strided_batch_gemm.h	/^    inline const T* GetBufferA() const { return k_buf; }$/;"	f	class:StridedBatchGemm
+GetBufferB	include/strided_batch_gemm.h	/^    inline const T* GetBufferB() const { return q_buf; }$/;"	f	class:StridedBatchGemm
+GetConfig	include/dropout.h	/^    Config GetConfig() const { return _config; }$/;"	f	class:Dropout
+GetCublasHandle	include/context.h	/^    cublasHandle_t GetCublasHandle() { return _cublasHandle; }$/;"	f	class:Context
+GetCurrentStream	include/context.h	/^    cudaStream_t GetCurrentStream()$/;"	f	class:Context
+GetGemmAlgos	include/context.h	/^    const std::vector<std::array<int, 3>>& GetGemmAlgos() const { return _gemm_algos; }$/;"	f	class:Context
+GetHiddenSize	include/ds_transformer_cuda.h	/^    inline int GetHiddenSize() const { return _hidden_size; }$/;"	f	class:BertTransformerLayer
+GetIntermediateSize	include/ds_transformer_cuda.h	/^    inline int GetIntermediateSize() const { return _intermediate_size; }$/;"	f	class:BertTransformerLayer
+GetN	include/strided_batch_gemm.h	/^    inline int GetN() const { return _config.k; }$/;"	f	class:StridedBatchGemm
+GetNumHeads	include/ds_transformer_cuda.h	/^    inline int GetNumHeads() const { return _heads; }$/;"	f	class:BertTransformerLayer
+GetNumHeads	include/softmax.h	/^    inline size_t GetNumHeads() const { return config_.heads; }$/;"	f	class:Softmax
+GetProbDepth	include/softmax.h	/^    inline size_t GetProbDepth() const { return config_.prob_depth; }$/;"	f	class:Softmax
+GetRandGenerator	include/context.h	/^    curandGenerator_t& GetRandGenerator() { return _gen; }$/;"	f	class:Context
+GetSeqLength	include/ds_transformer_cuda.h	/^    inline int GetSeqLength() const { return _seq_length; }$/;"	f	class:BertTransformerLayer
+GetSeqLength	include/softmax.h	/^    inline size_t GetSeqLength() const { return config_.seq_length; }$/;"	f	class:Softmax
+GetTimeInSeconds	include/StopWatch.h	/^    double GetTimeInSeconds() { return m_total_time; }$/;"	f	class:Stopwatch
+GetTimeInSeconds	include/StopWatch.h	/^    double GetTimeInSeconds()$/;"	f	class:Stopwatch
+GetTimeInSeconds	include/common.h	/^    double GetTimeInSeconds()$/;"	f	class:Stopwatch
+GetWorkSpace	include/context.h	/^    void* GetWorkSpace() { return _workspace; }$/;"	f	class:Context
+HEX	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	483;"	d	file:
+HEX	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	468;"	d	file:
+HasDropout	include/dropout.h	/^    bool HasDropout() const { return _config.RATIO() > 0.0; }$/;"	f	class:Dropout
+ID_VOID_MAIN	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	6;"	d	file:
+INCLUDE_DIR	Makefile	/^INCLUDE_DIR =.\/include$/;"	m
+IncrementOffset	include/context.h	/^    std::pair<uint64_t, uint64_t> IncrementOffset(uint64_t offset_inc)$/;"	f	class:Context
+IncrementStep	include/cpu_adam.h	/^    inline void IncrementStep(size_t step, float beta1, float beta2)$/;"	f	class:Adam_Optimizer
+Initialize	src/ds_transformer_cuda.cpp	/^template <typename T> void BertTransformerLayer<T>::Initialize() {$/;"	f	class:BertTransformerLayer
+Instance	include/context.h	/^    static Context& Instance()$/;"	f	class:Context
+IsTrainingMode	include/ds_transformer_cuda.h	/^    inline bool IsTrainingMode() const { return _training; }$/;"	f	class:BertTransformerLayer
+K	include/gemm_test.h	/^    int M, N, K;$/;"	m	class:GemmTest
+K	include/gemm_test.h	/^    int bsz, M, N, K;$/;"	m	class:StridedGemmTest
+LIBS	Makefile	/^LIBS=-lcublas$/;"	m
+M	include/gemm_test.h	/^    int M, N, K;$/;"	m	class:GemmTest
+M	include/gemm_test.h	/^    int bsz, M, N, K;$/;"	m	class:StridedGemmTest
+MAX_REGISTERS	include/custom_cuda_layers.h	25;"	d
+MAX_THREADS	include/custom_cuda_layers.h	14;"	d
+MAX_THREAD_ITERATIONS	include/custom_cuda_layers.h	22;"	d
+MAX_THREAD_STRIDE	include/custom_cuda_layers.h	17;"	d
+MAX_WARP_NUM	include/custom_cuda_layers.h	23;"	d
+N	include/gemm_test.h	/^    int M, N, K;$/;"	m	class:GemmTest
+N	include/gemm_test.h	/^    int bsz, M, N, K;$/;"	m	class:StridedGemmTest
+NVCC	Makefile	/^NVCC=nvcc$/;"	m
+Normalize_Layer	include/normalize_layer.h	/^    Normalize_Layer(Config config)$/;"	f	class:Normalize_Layer
+Normalize_Layer	include/normalize_layer.h	/^class Normalize_Layer {$/;"	c
+OBJECT_DIR	Makefile	/^OBJECT_DIR=.\/obj$/;"	m
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	313;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	316;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	319;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	322;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	325;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	328;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	331;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	334;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	337;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	340;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	343;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	346;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	349;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	352;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	355;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	358;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	361;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	364;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	367;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	370;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	373;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	376;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	379;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	382;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	385;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	389;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	392;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	395;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	398;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	401;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	405;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	298;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	301;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	304;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	307;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	310;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	313;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	316;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	319;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	322;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	325;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	328;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	331;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	334;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	337;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	340;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	343;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	346;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	349;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	352;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	355;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	358;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	361;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	364;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	367;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	370;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	374;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	377;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	380;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	383;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	386;"	d	file:
+PLATFORM_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	390;"	d	file:
+PYBIND11_MODULE	src/ds_transformer_cuda.cpp	/^PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {$/;"	f
+RATIO	include/dropout.h	/^        float RATIO() const { return training ? ratio : 0.0; }$/;"	f	struct:Dropout::Config
+Record	include/Timer.h	/^    inline void Record() { cudaEventRecord(start); }$/;"	f	class:GPUTimer
+Reset	include/StopWatch.h	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
+Reset	include/Timer.h	/^    inline void Reset() { start = std::chrono::high_resolution_clock::now(); }$/;"	f	class:CPUTimer
+Reset	include/common.h	/^    void Reset() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
+Restart	include/StopWatch.h	/^    void Restart()$/;"	f	class:Stopwatch
+Run	include/gemm_test.h	/^    int Run(int loops, Func f)$/;"	f	class:GemmTest
+Run	include/gemm_test.h	/^    int Run(int loops, Func f)$/;"	f	class:StridedGemmTest
+SIMD_DIV	include/cpu_adam.h	32;"	d
+SIMD_DIV	include/cpu_adam.h	42;"	d
+SIMD_FMA	include/cpu_adam.h	30;"	d
+SIMD_FMA	include/cpu_adam.h	40;"	d
+SIMD_LOAD	include/cpu_adam.h	27;"	d
+SIMD_LOAD	include/cpu_adam.h	37;"	d
+SIMD_MUL	include/cpu_adam.h	29;"	d
+SIMD_MUL	include/cpu_adam.h	39;"	d
+SIMD_SET	include/cpu_adam.h	28;"	d
+SIMD_SET	include/cpu_adam.h	38;"	d
+SIMD_SQRT	include/cpu_adam.h	31;"	d
+SIMD_SQRT	include/cpu_adam.h	41;"	d
+SIMD_STORE	include/cpu_adam.h	26;"	d
+SIMD_STORE	include/cpu_adam.h	36;"	d
+SIMD_WIDTH	include/cpu_adam.h	33;"	d
+SIMD_WIDTH	include/cpu_adam.h	43;"	d
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	163;"	d	file:
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	178;"	d	file:
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	21;"	d	file:
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	157;"	d	file:
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	172;"	d	file:
+SIMULATE_ID	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	21;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	170;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	185;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	37;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	164;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	179;"	d	file:
+SIMULATE_VERSION_MAJOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	37;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	171;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	186;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	38;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	165;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	180;"	d	file:
+SIMULATE_VERSION_MINOR	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	38;"	d	file:
+SOURCE_DIR	Makefile	/^SOURCE_DIR =.\/src$/;"	m
+STRINGIFY	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	309;"	d	file:
+STRINGIFY	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	294;"	d	file:
+STRINGIFY_HELPER	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	308;"	d	file:
+STRINGIFY_HELPER	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	293;"	d	file:
+SetConfig	include/strided_batch_gemm.h	/^        void SetConfig(int mm, int nn, int kk)$/;"	f	struct:StridedBatchGemm::Config
+SetConfig	include/strided_batch_gemm.h	/^    inline void SetConfig(int m, int n, int k) { _config.SetConfig(m, n, k); }$/;"	f	class:StridedBatchGemm
+SetDim	include/dropout.h	/^        inline void SetDim(uint32_t d) { dim = d; }$/;"	f	struct:Dropout::Config
+SetDimension	include/dropout.h	/^    inline void SetDimension(uint32_t dim) { _config.SetDim(dim); }$/;"	f	class:Dropout
+SetIntermediateBuffers	src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::SetIntermediateBuffers($/;"	f	class:BertTransformerLayer
+SetMask	include/dropout.h	/^    void SetMask(uint8_t* mask)$/;"	f	class:Dropout
+SetMean	include/normalize_layer.h	/^    inline void SetMean(T* mean)$/;"	f	class:Normalize_Layer
+SetSeed	include/context.h	/^    void SetSeed(uint64_t new_seed) { _seed = new_seed; }$/;"	f	class:Context
+SetSeqLength	include/softmax.h	/^    inline void SetSeqLength(size_t seq_len) { config_.seq_length = seq_len; }$/;"	f	class:Softmax
+SetSeqLength	src/ds_transformer_cuda.cpp	/^template <typename T> void BertTransformerLayer<T>::SetSeqLength(int seq_len) {$/;"	f	class:BertTransformerLayer
+SetTrainingMode	include/dropout.h	/^    void SetTrainingMode(bool training) { _config.training = training; }$/;"	f	class:Dropout
+SetTrainingMode	src/ds_transformer_cuda.cpp	/^void BertTransformerLayer<T>::SetTrainingMode(bool training) {$/;"	f	class:BertTransformerLayer
+SetVar	include/normalize_layer.h	/^    inline void SetVar(T* variance)$/;"	f	class:Normalize_Layer
+SetWorkSpace	include/context.h	/^    void SetWorkSpace(void* workspace)$/;"	f	class:Context
+Softmax	include/softmax.h	/^    Softmax(Config config) : config_(config) {}$/;"	f	class:Softmax
+Softmax	include/softmax.h	/^class Softmax {$/;"	c
+Start	include/StopWatch.h	/^    void Start() { QueryPerformanceCounter(&m_start_time); }$/;"	f	class:Stopwatch
+Start	include/StopWatch.h	/^    void Start()$/;"	f	class:Stopwatch
+Stop	include/StopWatch.h	/^    void Stop()$/;"	f	class:Stopwatch
+Stopwatch	include/StopWatch.h	/^    Stopwatch() { m_total_time = 0.0; }$/;"	f	class:Stopwatch
+Stopwatch	include/StopWatch.h	/^    Stopwatch()$/;"	f	class:Stopwatch
+Stopwatch	include/StopWatch.h	/^class Stopwatch {$/;"	c
+Stopwatch	include/common.h	/^    Stopwatch()$/;"	f	class:Stopwatch
+Stopwatch	include/common.h	/^class Stopwatch {$/;"	c
+StridedBatchGemm	include/strided_batch_gemm.h	/^    StridedBatchGemm(const Config& config) : _config(config) {}$/;"	f	class:StridedBatchGemm
+StridedBatchGemm	include/strided_batch_gemm.h	/^class StridedBatchGemm {$/;"	c
+StridedGemmTest	include/gemm_test.h	/^    StridedGemmTest(int b,$/;"	f	class:StridedGemmTest
+StridedGemmTest	include/gemm_test.h	/^class StridedGemmTest {$/;"	c
+THREADS	include/custom_cuda_layers.h	15;"	d
+THREADS	include/general_kernels.h	12;"	d
+TILE	include/cpu_adam.h	23;"	d
+TILE_DIM	include/custom_cuda_layers.h	18;"	d
+TILE_DIM	include/general_kernels.h	13;"	d
+TestAlgo	include/gemm_test.h	/^    std::array<int, 3> TestAlgo(int loops)$/;"	f	class:GemmTest
+TestAlgo	include/gemm_test.h	/^    std::array<int, 3> TestAlgo(int loops)$/;"	f	class:StridedGemmTest
+TestGemmFP16	include/context.h	/^    void TestGemmFP16(bool test_gemm, int batch_size, int seq_len, int head_num, int size_per_head)$/;"	f	class:Context
+UseMean	include/normalize_layer.h	/^    inline bool UseMean() const { return config_.useMean; }$/;"	f	class:Normalize_Layer
+WARP_SIZE	include/context.h	13;"	d
+__FEEDFORWARD_H__	include/feed_forward.h	2;"	d
+__TIMER_H__	include/Timer.h	3;"	d
+_adamw_mode	include/cpu_adam.h	/^    bool _adamw_mode;$/;"	m	class:Adam_Optimizer
+_alpha	include/cpu_adam.h	/^    float _alpha;$/;"	m	class:Adam_Optimizer
+_attn_context	include/ds_transformer_cuda.h	/^    StridedBatchGemm<T> _attn_context;$/;"	m	class:BertTransformerLayer
+_attn_dropout_checkpoint	include/ds_transformer_cuda.h	/^    bool _attn_dropout_checkpoint;$/;"	m	class:BertTransformerLayer
+_attn_layer_norm	include/ds_transformer_cuda.h	/^    Normalize_Layer<T> _attn_layer_norm;$/;"	m	class:BertTransformerLayer
+_attn_out_linear	include/ds_transformer_cuda.h	/^    FeedForward<T> _attn_out_linear;$/;"	m	class:BertTransformerLayer
+_attn_output_dropout	include/ds_transformer_cuda.h	/^    Dropout<T> _attn_output_dropout;$/;"	m	class:BertTransformerLayer
+_attn_prob_dropout	include/ds_transformer_cuda.h	/^    Dropout<T> _attn_prob_dropout;$/;"	m	class:BertTransformerLayer
+_attn_scores	include/ds_transformer_cuda.h	/^    StridedBatchGemm<T> _attn_scores;$/;"	m	class:BertTransformerLayer
+_batch_size	include/ds_transformer_cuda.h	/^    int _batch_size;$/;"	m	class:BertTransformerLayer
+_betta1	include/cpu_adam.h	/^    float _betta1;$/;"	m	class:Adam_Optimizer
+_betta1_t	include/cpu_adam.h	/^    float _betta1_t;$/;"	m	class:Adam_Optimizer
+_betta2	include/cpu_adam.h	/^    float _betta2;$/;"	m	class:Adam_Optimizer
+_betta2_t	include/cpu_adam.h	/^    float _betta2_t;$/;"	m	class:Adam_Optimizer
+_bias_correction1	include/cpu_adam.h	/^    float _bias_correction1;$/;"	m	class:Adam_Optimizer
+_bias_correction2	include/cpu_adam.h	/^    float _bias_correction2;$/;"	m	class:Adam_Optimizer
+_buf_index	include/cpu_adam.h	/^    bool _buf_index;$/;"	m	class:Adam_Optimizer
+_config	include/dropout.h	/^    Config _config;$/;"	m	class:Dropout
+_config	include/gelu.h	/^    Config _config;$/;"	m	class:Gelu
+_config	include/strided_batch_gemm.h	/^    Config _config;$/;"	m	class:StridedBatchGemm
+_cublasHandle	include/context.h	/^    cublasHandle_t _cublasHandle;$/;"	m	class:Context
+_cublasHandle	include/ds_transformer_cuda.h	/^    cublasHandle_t _cublasHandle;$/;"	m	class:BertTransformerLayer
+_curr_offset	include/context.h	/^    uint64_t _curr_offset;$/;"	m	class:Context
+_doubled_buffer	include/cpu_adam.h	/^    float* _doubled_buffer[2];$/;"	m	class:Adam_Optimizer
+_eps	include/cpu_adam.h	/^    float _eps;$/;"	m	class:Adam_Optimizer
+_ff1	include/ds_transformer_cuda.h	/^    FeedForward<T> _ff1, _ff2;$/;"	m	class:BertTransformerLayer
+_ff2	include/ds_transformer_cuda.h	/^    FeedForward<T> _ff1, _ff2;$/;"	m	class:BertTransformerLayer
+_gelu	include/ds_transformer_cuda.h	/^    Gelu<T> _gelu;$/;"	m	class:BertTransformerLayer
+_gelu_checkpoint	include/ds_transformer_cuda.h	/^    bool _gelu_checkpoint;$/;"	m	class:BertTransformerLayer
+_gemm_algos	include/context.h	/^    std::vector<std::array<int, 3>> _gemm_algos;$/;"	m	class:Context
+_gen	include/context.h	/^    curandGenerator_t _gen;$/;"	m	class:Context
+_heads	include/ds_transformer_cuda.h	/^    int _heads;$/;"	m	class:BertTransformerLayer
+_hidden_size	include/ds_transformer_cuda.h	/^    int _hidden_size;$/;"	m	class:BertTransformerLayer
+_intermediate_size	include/ds_transformer_cuda.h	/^    int _intermediate_size;$/;"	m	class:BertTransformerLayer
+_last_normalize	include/ds_transformer_cuda.h	/^    Normalize_Layer<T>* _last_normalize;$/;"	m	class:BertTransformerLayer
+_layer_id	include/ds_transformer_cuda.h	/^    int _layer_id;$/;"	m	class:BertTransformerLayer
+_layer_norm	include/ds_transformer_cuda.h	/^    Normalize_Layer<T> _layer_norm;$/;"	m	class:BertTransformerLayer
+_layer_output_dropout	include/ds_transformer_cuda.h	/^    Dropout<T> _layer_output_dropout;$/;"	m	class:BertTransformerLayer
+_mask	include/dropout.h	/^    uint8_t* _mask;$/;"	m	class:Dropout
+_normalize_invertible	include/ds_transformer_cuda.h	/^    bool _normalize_invertible;$/;"	m	class:BertTransformerLayer
+_pre_or_postLayerNorm	include/ds_transformer_cuda.h	/^    bool _pre_or_postLayerNorm;$/;"	m	class:BertTransformerLayer
+_qkv_linear	include/ds_transformer_cuda.h	/^    FeedForward<T> _qkv_linear;$/;"	m	class:BertTransformerLayer
+_seed	include/context.h	/^    uint64_t _seed;$/;"	m	class:Context
+_seq_length	include/ds_transformer_cuda.h	/^    int _seq_length;$/;"	m	class:BertTransformerLayer
+_size_per_head	include/ds_transformer_cuda.h	/^    int _size_per_head;$/;"	m	class:BertTransformerLayer
+_softmax	include/ds_transformer_cuda.h	/^    Softmax<T> _softmax;$/;"	m	class:BertTransformerLayer
+_step	include/cpu_adam.h	/^    size_t _step;$/;"	m	class:Adam_Optimizer
+_stochastic_mode	include/ds_transformer_cuda.h	/^    bool _stochastic_mode;$/;"	m	class:BertTransformerLayer
+_stream	include/ds_transformer_cuda.h	/^    cudaStream_t _stream;$/;"	m	class:BertTransformerLayer
+_training	include/ds_transformer_cuda.h	/^    bool _training;$/;"	m	class:BertTransformerLayer
+_weight_decay	include/cpu_adam.h	/^    float _weight_decay;$/;"	m	class:Adam_Optimizer
+_workspace	include/context.h	/^    void* _workspace;$/;"	m	class:Context
+alpha	include/gemm.h	/^    float alpha;$/;"	m	struct:GemmConfig
+alpha	include/strided_batch_gemm.h	/^        float alpha;$/;"	m	struct:StridedBatchGemm::Config
+batch	include/gemm.h	/^    int m, n, k, batch;$/;"	m	struct:GemmConfig
+batchSize	include/feed_forward.h	/^        int batchSize, outputSize;$/;"	m	struct:FeedForward::Config
+batchSize	include/normalize_layer.h	/^        uint32_t batchSize;$/;"	m	struct:Normalize_Layer::Config
+batchSize	include/softmax.h	/^        size_t batchSize;$/;"	m	struct:Softmax::Config
+batch_size	include/strided_batch_gemm.h	/^        int batch_size;$/;"	m	struct:StridedBatchGemm::Config
+beta	include/gemm.h	/^    float beta;$/;"	m	struct:GemmConfig
+beta	include/strided_batch_gemm.h	/^        float beta;$/;"	m	struct:StridedBatchGemm::Config
+bsz	include/gemm_test.h	/^    int bsz, M, N, K;$/;"	m	class:StridedGemmTest
+check	include/gemm_test.h	/^void check(T result, char const* const func, const char* const file, int const line)$/;"	f
+checkResult	include/common.h	/^void checkResult(float *seqRef, float *asyncRef, int N)$/;"	f
+check_cuda_error	include/gemm_test.h	24;"	d
+config_	include/feed_forward.h	/^    Config config_;$/;"	m	class:FeedForward
+config_	include/normalize_layer.h	/^    Config config_;$/;"	m	class:Normalize_Layer
+config_	include/softmax.h	/^    Config config_;$/;"	m	class:Softmax
+const	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	10;"	d	file:
+create_transformer_layer	src/ds_transformer_cuda.cpp	/^int create_transformer_layer(int layer_id, int batch_size, int hidden_dim,$/;"	f
+data	include/cpu_adam.h	/^        __m512 data;$/;"	m	union:Adam_Optimizer::AVX_Data
+dim	include/dropout.h	/^        uint32_t dim;$/;"	m	struct:Dropout::Config
+ds_transformer_backward	src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_backward($/;"	f
+ds_transformer_forward	src/ds_transformer_cuda.cpp	/^std::vector<torch::Tensor> ds_transformer_forward($/;"	f
+epsilon	include/normalize_layer.h	/^        float epsilon;$/;"	m	struct:Normalize_Layer::Config
+features	build/CMakeFiles/feature_tests.c	/^  const char features[] = {"\\n"$/;"	v
+features	build/CMakeFiles/feature_tests.cxx	/^  const char features[] = {"\\n"$/;"	v
+filename	scripts/plot_speedups.py	/^            filename = ".\/plots\/"+filename[:-4]+".pdf"$/;"	v
+filename	scripts/plot_speedups.py	/^            filename = sys.argv[2].split("\/")[1]$/;"	v
+gemm_algos	include/feed_forward.h	/^        std::array<int, 3> gemm_algos;$/;"	m	struct:FeedForward::Config
+gemm_algos	include/strided_batch_gemm.h	/^        std::array<int, 3> gemm_algos;$/;"	m	struct:StridedBatchGemm::Config
+get_workspace_size	src/ds_transformer_cuda.cpp	/^size_t get_workspace_size(int maxBatchSize, int seq_len, int hidden_size,$/;"	f
+handle	include/gemm_test.h	/^    cublasHandle_t handle;$/;"	m	class:GemmTest
+handle	include/gemm_test.h	/^    cublasHandle_t handle;$/;"	m	class:StridedGemmTest
+heads	include/softmax.h	/^        size_t heads;$/;"	m	struct:Softmax::Config
+hiddenDim	include/normalize_layer.h	/^        uint32_t hiddenDim;$/;"	m	struct:Normalize_Layer::Config
+info_arch	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";$/;"	v
+info_arch	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const* info_arch = "INFO" ":" "arch[" ARCHITECTURE_ID "]";$/;"	v
+info_compiler	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";$/;"	v
+info_compiler	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const* info_compiler = "INFO" ":" "compiler[" COMPILER_ID "]";$/;"	v
+info_cray	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";$/;"	v
+info_cray	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const *info_cray = "INFO" ":" "compiler_wrapper[CrayPrgEnv]";$/;"	v
+info_language_dialect_default	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^const char* info_language_dialect_default =$/;"	v
+info_language_dialect_default	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^const char* info_language_dialect_default = "INFO" ":" "dialect_default["$/;"	v
+info_platform	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";$/;"	v
+info_platform	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const* info_platform = "INFO" ":" "platform[" PLATFORM_ID "]";$/;"	v
+info_simulate	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";$/;"	v
+info_simulate	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const* info_simulate = "INFO" ":" "simulate[" SIMULATE_ID "]";$/;"	v
+info_simulate_version	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const info_simulate_version[] = {$/;"	v
+info_simulate_version	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_simulate_version[] = {$/;"	v
+info_version	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const info_version[] = {$/;"	v
+info_version	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_version[] = {$/;"	v
+info_version_internal	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const info_version_internal[] = {$/;"	v
+info_version_internal	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_version_internal[] = {$/;"	v
+init_seq_length	src/ds_transformer_cuda.cpp	/^const int init_seq_length = 128;$/;"	v
+initializeOnes	include/common.h	/^void initializeOnes(float *input, int num_elements)$/;"	f
+inputSize	include/feed_forward.h	/^        int inputSize;$/;"	m	struct:FeedForward::Config
+intermediate_size	include/gelu.h	/^        uint32_t intermediate_size;$/;"	m	struct:Gelu::Config
+k	include/gemm.h	/^    int m, n, k, batch;$/;"	m	struct:GemmConfig
+k	include/strided_batch_gemm.h	/^        int k;$/;"	m	struct:StridedBatchGemm::Config
+k_buf	include/strided_batch_gemm.h	/^    const T* k_buf;$/;"	m	class:StridedBatchGemm
+lda	include/gemm.h	/^    long long int lda,ldb,ldc;$/;"	m	struct:GemmConfig
+ldb	include/gemm.h	/^    long long int lda,ldb,ldc;$/;"	m	struct:GemmConfig
+ldc	include/gemm.h	/^    long long int lda,ldb,ldc;$/;"	m	struct:GemmConfig
+m	include/gemm.h	/^    int m, n, k, batch;$/;"	m	struct:GemmConfig
+m	include/strided_batch_gemm.h	/^        int m;$/;"	m	struct:StridedBatchGemm::Config
+m_gemm_batch1_algo	include/ds_transformer_cuda.h	/^    int m_gemm_batch1_algo;$/;"	m	struct:BertGemmAlgos
+m_gemm_batch2_algo	include/ds_transformer_cuda.h	/^    int m_gemm_batch2_algo;$/;"	m	struct:BertGemmAlgos
+m_gemm_inter_algo	include/ds_transformer_cuda.h	/^    int m_gemm_inter_algo;$/;"	m	struct:BertGemmAlgos
+m_gemm_output_algo	include/ds_transformer_cuda.h	/^    int m_gemm_output_algo;$/;"	m	struct:BertGemmAlgos
+m_gemm_qkv_algo	include/ds_transformer_cuda.h	/^    int m_gemm_qkv_algo;$/;"	m	struct:BertGemmAlgos
+m_is_started	include/StopWatch.h	/^    bool m_is_started;$/;"	m	class:Stopwatch
+m_is_started	include/common.h	/^    bool m_is_started;$/;"	m	class:Stopwatch
+m_start_time	include/StopWatch.h	/^    LARGE_INTEGER m_start_time;$/;"	m	class:Stopwatch
+m_start_time	include/StopWatch.h	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec
+m_start_time	include/common.h	/^    struct timespec m_start_time;$/;"	m	class:Stopwatch	typeref:struct:Stopwatch::timespec
+m_total_time	include/StopWatch.h	/^    double m_total_time;$/;"	m	class:Stopwatch
+m_total_time	include/common.h	/^    double m_total_time;$/;"	m	class:Stopwatch
+main	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^int main(argc, argv) int argc; char *argv[];$/;"	f
+main	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^void main() {}$/;"	f
+main	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^int main(int argc, char* argv[])$/;"	f
+main	build/CMakeFiles/feature_tests.c	/^int main(int argc, char** argv) { (void)argv; return features[argc]; }$/;"	f
+main	build/CMakeFiles/feature_tests.cxx	/^int main(int argc, char** argv) { (void)argv; return features[argc]; }$/;"	f
+means	include/normalize_layer.h	/^    T* means;$/;"	m	class:Normalize_Layer
+mem_alloc	include/softmax.h	/^        bool mem_alloc;$/;"	m	struct:Softmax::Config
+minus_infinity	include/general_kernels.h	15;"	d
+n	include/gemm.h	/^    int m, n, k, batch;$/;"	m	struct:GemmConfig
+n	include/strided_batch_gemm.h	/^        int n;$/;"	m	struct:StridedBatchGemm::Config
+op_A	include/gemm.h	/^    cublasOperation_t op_A;$/;"	m	struct:GemmConfig
+op_A	include/strided_batch_gemm.h	/^        cublasOperation_t op_A;$/;"	m	struct:StridedBatchGemm::Config
+op_B	include/gemm.h	/^    cublasOperation_t op_B;$/;"	m	struct:GemmConfig
+op_B	include/strided_batch_gemm.h	/^        cublasOperation_t op_B;$/;"	m	struct:StridedBatchGemm::Config
+outputSize	include/feed_forward.h	/^        int batchSize, outputSize;$/;"	m	struct:FeedForward::Config
+plot_bar	scripts/plot_speedups.py	/^def plot_bar(filename):$/;"	f
+plot_line	scripts/plot_speedups.py	/^def plot_line(filename):$/;"	f
+print	include/common.h	/^void print(float *input, int num_elements)$/;"	f
+prob_depth	include/softmax.h	/^        size_t prob_depth;$/;"	m	struct:Softmax::Config
+q_buf	include/strided_batch_gemm.h	/^    const T* q_buf;$/;"	m	class:StridedBatchGemm
+qnxnto	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	/^char const* qnxnto = "INFO" ":" "qnxnto[]";$/;"	v
+qnxnto	build/CMakeFiles/3.10.2/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const* qnxnto = "INFO" ":" "qnxnto[]";$/;"	v
+ratio	include/dropout.h	/^        float ratio;$/;"	m	struct:Dropout::Config
+reduce_block_into_lanes	include/type_shim.h	/^reduce_block_into_lanes(T* x,$/;"	f
+restart	include/common.h	/^    void restart()$/;"	f	class:Stopwatch
+s_transformer_layers	src/ds_transformer_cuda.cpp	/^static std::unordered_map<int, std::shared_ptr<void>> s_transformer_layers;$/;"	v	file:
+seqLength	include/normalize_layer.h	/^        uint32_t seqLength;$/;"	m	struct:Normalize_Layer::Config
+seq_length	include/softmax.h	/^        size_t seq_length;$/;"	m	struct:Softmax::Config
+speedup	scripts/plot_speedups.py	/^            speedup = float(seq)\/float(asyn)$/;"	v
+speedup_file	scripts/plot_speedups.py	/^        speedup_file = open(sys.argv[2]).readlines()$/;"	v
+start	include/Timer.h	/^    cudaEvent_t start, stop;$/;"	m	class:GPUTimer
+start	include/Timer.h	/^    std::chrono::high_resolution_clock::time_point start;$/;"	m	class:CPUTimer
+start	include/common.h	/^    void start()$/;"	f	class:Stopwatch
+stop	include/Timer.h	/^    cudaEvent_t start, stop;$/;"	m	class:GPUTimer
+stop	include/common.h	/^    void stop()$/;"	f	class:Stopwatch
+temprature	include/softmax.h	/^        float temprature;$/;"	m	struct:Softmax::Config
+training	include/dropout.h	/^        bool training;$/;"	m	struct:Dropout::Config
+training	include/normalize_layer.h	/^        bool training;$/;"	m	struct:Normalize_Layer::Config
+transa	include/gemm_test.h	/^    cublasOperation_t transa, transb;$/;"	m	class:GemmTest
+transa	include/gemm_test.h	/^    cublasOperation_t transa, transb;$/;"	m	class:StridedGemmTest
+transb	include/gemm_test.h	/^    cublasOperation_t transa, transb;$/;"	m	class:GemmTest
+transb	include/gemm_test.h	/^    cublasOperation_t transa, transb;$/;"	m	class:StridedGemmTest
+update_state	include/cpu_adam.h	/^    inline void update_state(float lr, float epsilon, float weight_decay, bool bias_correction)$/;"	f	class:Adam_Optimizer
+useMean	include/normalize_layer.h	/^        bool useMean;$/;"	m	struct:Normalize_Layer::Config
+vals_hat	include/normalize_layer.h	/^    T* vals_hat;$/;"	m	class:Normalize_Layer
+vars	include/normalize_layer.h	/^    T* vars;$/;"	m	class:Normalize_Layer
+volatile	build/CMakeFiles/3.10.2/CompilerIdC/CMakeCCompilerId.c	11;"	d	file:
+x	scripts/plot_speedups.py	/^        x=[2,4,8,12,16]$/;"	v
+y	scripts/plot_speedups.py	/^        y = []$/;"	v
+~Adam_Optimizer	include/cpu_adam.h	/^    ~Adam_Optimizer()$/;"	f	class:Adam_Optimizer
+~BertTransformerLayer	src/ds_transformer_cuda.cpp	/^template <typename T> BertTransformerLayer<T>::~BertTransformerLayer() {}$/;"	f	class:BertTransformerLayer
+~Context	include/context.h	/^    virtual ~Context()$/;"	f	class:Context
+~Dropout	include/dropout.h	/^    virtual ~Dropout() {}$/;"	f	class:Dropout
+~FeedForward	include/feed_forward.h	/^    ~FeedForward() {}$/;"	f	class:FeedForward
+~GPUTimer	include/Timer.h	/^    ~GPUTimer()$/;"	f	class:GPUTimer
+~Gelu	include/gelu.h	/^    virtual ~Gelu() {}$/;"	f	class:Gelu
+~GemmTest	include/gemm_test.h	/^    ~GemmTest()$/;"	f	class:GemmTest
+~Normalize_Layer	include/normalize_layer.h	/^    ~Normalize_Layer() {}$/;"	f	class:Normalize_Layer
+~Softmax	include/softmax.h	/^    ~Softmax() {}$/;"	f	class:Softmax
+~Stopwatch	include/StopWatch.h	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
+~Stopwatch	include/common.h	/^    ~Stopwatch() {}$/;"	f	class:Stopwatch
+~StridedBatchGemm	include/strided_batch_gemm.h	/^    virtual ~StridedBatchGemm() {}$/;"	f	class:StridedBatchGemm
+~StridedGemmTest	include/gemm_test.h	/^    ~StridedGemmTest()$/;"	f	class:StridedGemmTest
