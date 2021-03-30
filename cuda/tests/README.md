@@ -20,7 +20,8 @@ run the binary file
 ```./NormalizeLayer 4 512 768 4```
 (the params are: <batch_size> <sequence_length> <hidden_size> <num_queues>)
 the output is dumped to "input_norm.json"
-```python compare_outputs.py input_norm.json bert_norm.json 4 512 768 4```
+```python compare_outputs.py 1e-5```
+The filenames are hardcoded inside the script. The epsilon is a command line argument. 
 ### For running normalize_layer.cu
 compile the cuda source
 ```nvcc -std=c++11 feed_forward.cu -lcublas -o FeedForward```
