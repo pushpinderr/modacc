@@ -1,6 +1,7 @@
 import sys
 import json
 import torch # uncomment
+import colors
 import argparse 
 import numpy as np
 import transformers # uncomment
@@ -72,7 +73,7 @@ class LayerGetter():
             pass
         else:
             path = f"{layer_name}.json"
-        json.dump(layer_weights.tolist(), open(path, "w"))
+        json.dump(torch.flatten(layer_weights).tolist(), open(path, "w"))
 
     def dump_layer_names(self, path=None):
         '''
@@ -112,7 +113,7 @@ class LayerGetter():
             pass
         else:
             path = f"{self.model_path}.json"
-        json.dump(self.layers, open(path, "w"))
+        json.dump({k:torch.flatten(w).tolist() for k,w in self.layers.items()}, open(path, "w"))
         
     def print_layer_info(self, layer_name):
         '''
@@ -207,4 +208,14 @@ if __name__ == "__main__":
     parser.add_argument("-n", "--layer_name")
     args = {k:v for k,v in vars(parser.parse_args(sys.argv[3:])).items() if v}
     # print(args)
+    val = colors.color(f"'{sys.argv[1]}'", fg="#0fbd32")
+    print(f"getterObject = {colors.color('LayerGetter', fg='#ffc400')}({colors.color('path', fg='#c87aff')}{colors.color('=', fg='#eb7065')}{val})")
+
+    executed_str = f"getterObject.{colors.color(sys.argv[2], fg='#ffc400')}("
+    for k in args:
+        val = colors.color(f"'{args[k]}'", fg="#0fbd32")
+        executed_str += f"{colors.color(k, fg='#c87aff')}{colors.color('=', fg='#eb7065')}{val},"
+    executed_str = executed_str[:-1]+')'
+    print(executed_str)
+
     getattr(getterObject, sys.argv[2])(**args)

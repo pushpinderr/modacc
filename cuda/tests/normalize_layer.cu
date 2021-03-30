@@ -1,4 +1,4 @@
-// %%cuda --name NormalizeLayer.cu
+// %%cuda --name ../tests/normalize_layer.cu
 #include <stdio.h>
 #include <cuda.h>
 #include <assert.h>
@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
+#include <bits/stdc++.h>
 #include <cooperative_groups.h>
 #include <curand_kernel.h>
 #include <stdexcept>
+#include "json.hpp"
 
 namespace cg = cooperative_groups;
-
+using json = nlohmann::json;
 
 #define MAX_THREADS 1024
 #define THREADS 256
@@ -285,7 +287,11 @@ void launch_bias_residual_layer_norm<float>(float* vals,
     dim3 block_dim(threads);
 
     if (DEBUG) 
-        std::cout << "launching bias residual layer norm, with stream_index=" << q_index << std::endl;
+        std::cout << "queue_index=" << q_index << "\x1b[41;1mlbrf<<<>>>\x1b[0m";
+        std::cout << "\x1b[31;1m, vals=" << vals; 
+        std::cout << "\x1b[32;1m, residual=" << residual;
+        std::cout << "\x1b[33;1m, gamma=" << gamma;
+        std::cout << "\x1b[34;1m, betta=" << beta << "\x1b[0m;" << std::endl;
     fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim);
 }
@@ -319,8 +325,6 @@ void launch_bias_residual_layer_norm<__half>(__half* vals,
         throw std::runtime_error("Unsupport hidden_dim.");
 
     dim3 block_dim(threads);
-    // if (DEBUG)
-    //     std::cout << "queue_index=" << queue_index << " offset=" << offset << std::endl;
     fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim / 2);
 }
@@ -453,13 +457,40 @@ class Buffer {
             _host_data[i] = 1;
     }
 
-    // void read_input() {
-    //     for (int i = 0; i)
-    // }
+    void from(std::string fname) {
+        json j;
+        std::ifstream fin(fname);
+        fin >> j;
+        std::vector <T> vec = j;
+        
+        if (vec.size() != num_elements) {
+            std::cout << "the file has a tensor of different size";
+            exit(EXIT_FAILURE);
+        }
+        
+        for (int i = 0; i < num_elements; i++)
+            _host_data[i] = vec[i];
+    } 
 
-    // void write_output() {
+    void to(std::string fname) {
+        std::ofstream fout(fname);
+        fout << "[";
+        for (int i = 0; i < num_elements-1; i++) {
+            fout << _host_data[i] << ", ";
+        }
+        fout << _host_data[num_elements-1];
+        fout << "]";
+    }
 
-    // }
+    /* void to(std::string fname) {
+        std::vector <T> dump_t;
+        for (int i = 0; i < num_elements; i++)
+            dump_t.push_back(_host_data[i]);
+        json j = json::parse(dump_t);
+        std::ofstream fout(fname);
+        std::cout << j;
+        // fout << j.dump();
+    } */
 
     void print_host_data() {
         for (int i = 0; i < num_elements; i++)
@@ -499,6 +530,22 @@ class Buffer {
     T *_device_data;
     int num_elements;
 };
+// template <> Buffer <float>;
+
+/* template <> void Buffer<float>::from(std::string fname) {
+        json j; 
+        std::ifstream fin(fname); 
+        fin >> j;
+        std::vector <float> vec = j;
+        
+        if (vec.size() != num_elements) {
+            std::cout << "the file has a tensor of different size";
+            exit(EXIT_FAILURE);
+        }
+        
+        for (int i = 0; i < num_elements; i++)
+            _host_data[i] = vec[i];
+} */
 
 template <typename T>
 class Normalize {
@@ -558,7 +605,7 @@ public:
 
 
         vals->copyD2H(SE->compute);
-        // residual->copyD2H(SE->compute);
+        residual->copyD2H(SE->compute);
         // gamma->copyD2H(SE->compute);
         // betta->copyD2H(SE->compute);
 
@@ -577,9 +624,10 @@ public:
         uint32_t batch_size = config_.batchSize; 
         uint32_t sequence_length = config_.seqLength; 
         uint32_t hidden_size = config_.hiddenDim;
-     
+        std::cout << "\x1b[32;1mForwardCheckpointPartition\x1b[0m\n";
         int offset = 0;
         int partition_size = (batch_size / nq);
+        std::cout << "\x1b[31;1mpartition_size=" << partition_size << "\x1b[0m" << std::endl;
         gamma->copyH2D(SE->compute);
         betta->copyH2D(SE->compute);    
         std::cout << "creating queues" << std::endl;
@@ -591,8 +639,13 @@ public:
             vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
             if (DEBUG)
-                std::cout << "queue_index=" << i << " offset=" << offset << std::endl;
+                std::cout << "queue_index=" << i << ", offset=" << offset; 
+                std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
+                std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
+                std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
+                std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
 
+            cublasSetStream(SE->handle, SE->compute[i]);
             launch_bias_residual_layer_norm(vals->get_device_data(offset),
                                 residual->get_device_data(offset),
                                 gamma->get_device_data(),
@@ -654,21 +707,28 @@ int main(int argc, char *argv[])
  
     std::cout << "batch size=" << batch_size << std::endl;
     std::cout << "sequence length=" << sequence_length << std::endl;
-    std::cout << "hidden layer size =" << hidden_size << std::endl;
-    std::cout << "number of queues =" << nq << std::endl;
+    std::cout << "hidden layer size=" << hidden_size << std::endl;
+    std::cout << "number of queues=" << nq << std::endl;
     printf("Read command line parameters\n");
  
     ScheduleEngine SE(nq);
+    // input.print_host_data();
+    // input.to("src/test.json");
+    
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> input_norm(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> norm_weights(hidden_size, &SE);
+    norm_weights.from("../dump/encoder.layer.0.output.LayerNorm.weight.json");
     Buffer<float> norm_bias(hidden_size, &SE);
+    norm_bias.from("../dump/encoder.layer.0.output.LayerNorm.bias.json");
     Buffer<float> norm_var(batch_size * sequence_length, &SE);
     Buffer<float> norm_mean(batch_size * sequence_length, &SE);
+
     float layernorm_eps=0.000001; 
     Normalize<float> normalize_input(Normalize<float>::Config(batch_size , sequence_length, hidden_size, layernorm_eps,true));
     normalize_input.SetMeansAndVariance(&norm_mean,&norm_var);
-    // normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
-    normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
-    printf("Executed normalize layer\n");
+    normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    // normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
+    input_norm.to("../dump/input_norm.json");
+    printf("Executed normalize layer\n"); 
 }
