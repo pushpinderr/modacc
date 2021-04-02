@@ -13,10 +13,10 @@
 #include <cooperative_groups.h>
 #include <curand_kernel.h>
 #include <stdexcept>
-#include "json.hpp"
+// #include "json.hpp"
 
 namespace cg = cooperative_groups;
-using json = nlohmann::json;
+// using json = nlohmann::json;
 
 #define MAX_THREADS 1024
 #define THREADS 256
@@ -457,20 +457,40 @@ class Buffer {
             _host_data[i] = 1;
     }
 
+    // void from(std::string fname) {
+    //     json j;
+    //     std::ifstream fin(fname);
+    //     fin >> j;
+    //     std::vector <T> vec = j;
+        
+    //     if (vec.size() != num_elements) {
+    //         std::cout << "the file has a tensor of different size";
+    //         exit(EXIT_FAILURE);
+    //     }
+        
+    //     for (int i = 0; i < num_elements; i++)
+    //         _host_data[i] = vec[i];
+    // } 
+
     void from(std::string fname) {
-        json j;
         std::ifstream fin(fname);
-        fin >> j;
-        std::vector <T> vec = j;
+        std::string word;
         
-        if (vec.size() != num_elements) {
-            std::cout << "the file has a tensor of different size";
-            exit(EXIT_FAILURE);
+        int i = 0;
+        while ( fin >> word ) {
+            if ( word.rfind("[",0) == 0 ) 
+                word = word.replace(0,1,"");
+            if ( word.compare(word.size()-1, 1, ",") == 0 )
+                word = word.replace(word.length()-1, word.length(),"");
+            if ( word.compare(word.size()-1, 1, "]") == 0 )
+                word = word.replace(word.length()-1, word.length(),"");
+
+            _host_data[i] = stof(word); 
+            i++;
+            // std::cout << stof(word) << std::endl; 
         }
-        
-        for (int i = 0; i < num_elements; i++)
-            _host_data[i] = vec[i];
-    } 
+        fin.close();
+    }
 
     void to(std::string fname) {
         std::ofstream fout(fname);
