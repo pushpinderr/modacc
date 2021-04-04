@@ -14,7 +14,7 @@
 #include <curand_kernel.h>
 #include <stdexcept>
 // #include "json.hpp"
-
+#define WALLCLOCK_PROFILE 1
 namespace cg = cooperative_groups;
 // using json = nlohmann::json;
 
@@ -603,8 +603,11 @@ public:
                            ScheduleEngine* SE,
                            bool preLayerNorm = false)
     {
-         
-        vals->copyH2D(SE->compute);
+#if WALLCLOCK_PROFILE
+        Stopwatch sw;
+        sw.start();
+#endif
+        //vals->copyH2D(SE->compute);
         residual->copyH2D(SE->compute);
         gamma->copyH2D(SE->compute);
         betta->copyH2D(SE->compute);
@@ -625,10 +628,13 @@ public:
 
 
         vals->copyD2H(SE->compute);
-        residual->copyD2H(SE->compute);
+        //residual->copyD2H(SE->compute);
         // gamma->copyD2H(SE->compute);
         // betta->copyD2H(SE->compute);
-
+#if WALLCLOCK_PROFILE
+        sw.stop();
+        std::cout<<"ForwardCheckpoint:"<<sw.GetTimeInSeconds()<<"\n";
+#endif
 
     }
 
@@ -648,23 +654,27 @@ public:
         int offset = 0;
         int partition_size = (batch_size / nq);
         std::cout << "\x1b[31;1mpartition_size=" << partition_size << "\x1b[0m" << std::endl;
+#if WALLCLOCK_PROFILE
+        Stopwatch sw;
+        sw.start();
+#endif
+ 
         gamma->copyH2D(SE->compute);
         betta->copyH2D(SE->compute);    
-        std::cout << "creating queues" << std::endl;
 
         for (int i = 0; i<nq; i++)
         {
             offset = i * partition_size * sequence_length * hidden_size; 
     
-            //vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
+            /*
             if (DEBUG)
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
                 std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
                 std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
                 std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
                 std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
-
+*/
             cublasSetStream(SE->handle, SE->compute[i]);
             launch_bias_residual_layer_norm(vals->get_device_data(offset),
                                 residual->get_device_data(offset),
@@ -683,6 +693,11 @@ public:
             vals->copyD2H(SE->compute, offset, nq, i);
         }
 	CHECK(cudaThreadSynchronize());
+#if WALLCLOCK_PROFILE
+        sw.stop();
+        std::cout<<"ForwardCheckpointPartition:"<<sw.GetTimeInSeconds()<<"\n";
+#endif
+
 
     }
 
@@ -729,7 +744,6 @@ int main(int argc, char *argv[])
     std::cout << "sequence length=" << sequence_length << std::endl;
     std::cout << "hidden layer size=" << hidden_size << std::endl;
     std::cout << "number of queues=" << nq << std::endl;
-    printf("Read command line parameters\n");
  
     ScheduleEngine SE(nq);
     // input.print_host_data();
@@ -747,8 +761,10 @@ int main(int argc, char *argv[])
     float layernorm_eps=0.000001; 
     Normalize<float> normalize_input(Normalize<float>::Config(batch_size , sequence_length, hidden_size, layernorm_eps,true));
     normalize_input.SetMeansAndVariance(&norm_mean,&norm_var);
-    //normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
-    normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
+    if(nq == 1)
+      normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    else
+      normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
     input_norm.to("../dump/input_norm.json");
     printf("Executed normalize layer\n"); 
 }
