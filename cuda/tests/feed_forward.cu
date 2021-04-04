@@ -1,5 +1,4 @@
-// %%cuda --name ../include/FeedForward.cu
-#include "json.hpp"
+// %%cuda --name FeedForward.cu
 
 #include <cuda.h>
 #include <time.h>
@@ -12,11 +11,8 @@
 #include <cuda_runtime.h>
 #include <curand_kernel.h>
 #include <cooperative_groups.h>
-// #include "custom_cuda_layers.h"
-// #include "cublas_wrappers.h"
 
 namespace cg = cooperative_groups;
-using json = nlohmann::json;
 
 #define MAX_THREADS 1024
 #define THREADS 256
@@ -355,21 +351,25 @@ class Buffer {
             _host_data[i] = 1;
     }
 
-
     void from(std::string fname) {
-        json j;
         std::ifstream fin(fname);
-        fin >> j;
-        std::vector <T> vec = j;
+        std::string word;
         
-        if (vec.size() != num_elements) {
-            std::cout << "the file has a tensor of different size";
-            exit(EXIT_FAILURE);
+        int i = 0;
+        while ( fin >> word ) {
+            if ( word.rfind("[",0) == 0 ) 
+                word = word.replace(0,1,"");
+            if ( word.compare(word.size()-1, 1, ",") == 0 )
+                word = word.replace(word.length()-1, word.length(),"");
+            if ( word.compare(word.size()-1, 1, "]") == 0 )
+                word = word.replace(word.length()-1, word.length(),"");
+
+            _host_data[i] = stof(word); 
+            i++;
+            // std::cout << stof(word) << std::endl; 
         }
-        
-        for (int i = 0; i < num_elements; i++)
-            _host_data[i] = vec[i];
-    } 
+        fin.close();
+    }
 
     void to(std::string fname) {
         std::ofstream fout(fname);
@@ -379,6 +379,13 @@ class Buffer {
         }
         fout << _host_data[num_elements-1];
         fout << "]";
+    }
+
+    void random(void) {
+        std::srand (static_cast <unsigned> (std::time(0)));
+        for ( int i = 0; i < num_elements; i++ ) {
+            _host_data[i] = static_cast <float> (std::rand())/static_cast <float> (RAND_MAX);
+        }
     }
 
     void print_host_data() {
@@ -474,12 +481,13 @@ public:
                            Buffer<T>* input_ptr,
                            Buffer<T>* weights,
                            Buffer<T>* out,
-                           ScheduleEngine* SE)
+                           ScheduleEngine* SE,
+                           int sync=false)
     {
 
         input_ptr->copyH2D(SE->compute);
         weights->copyH2D(SE->compute);
-        out->copyH2D(SE->compute);
+        // out->copyH2D(SE->compute);
 
         cublas_fine_gemm_ex(input_ptr->get_device_data(),
                             weights->get_device_data(),
@@ -492,8 +500,11 @@ public:
                             0,
                             cublasGemmAlgo_t(config_.gemm_algos[0]));
 
-        input_ptr->copyD2H(SE->compute);
-        weights->copyD2H(SE->compute);
+        if ( sync == true )
+            CHECK(cudaThreadSynchronize());
+
+        // input_ptr->copyD2H(SE->compute);
+        // weights->copyD2H(SE->compute);
         out->copyD2H(SE->compute);      
 
     }
@@ -515,7 +526,8 @@ public:
                                     Buffer<T>* weights,
                                     Buffer<T>* out,
                                     ScheduleEngine* SE,
-                                    int nq)
+                                    int nq,
+                                    int sync=true)
     {
         weights->copyH2D(SE->compute);
         int offset = 0;
@@ -531,8 +543,9 @@ public:
         {
             offset = i * offset_size;   
             input_ptr->copyH2D(SE->compute, offset, nq, i);
-            out->copyH2D(SE->compute, offset, nq, i);
+            // out->copyH2D(SE->compute, offset, nq, i);
             #if DEBUG
+                std::cout << "\x1b[31;1mqueue index=" << i << "\x1b[0m" << std::endl;
                 std::cout << "input offset=" << offset << std::endl;
                 std::cout << "output offset=" << 3*offset << std::endl;
             #endif
@@ -540,16 +553,19 @@ public:
                                 weights->get_device_data(),
                                 out->get_device_data(3*offset),
                                 config_.outputSize,
-                                bsz,
+                                bsz / nq,
                                 config_.inputSize,
                                 SE->handle,
                                 SE->compute,
                                 i,
                                 cublasGemmAlgo_t(config_.gemm_algos[0]));
 
-            input_ptr->copyD2H(SE->compute, offset, nq, i);
+            // input_ptr->copyD2H(SE->compute, offset, nq, i);
             out->copyD2H(SE->compute, offset, nq, i);      
         }
+     
+        if ( sync == true )
+            CHECK(cudaThreadSynchronize());
     }
 
 private:
@@ -574,8 +590,11 @@ int main(int argc, char *argv[])
     ScheduleEngine SE(nq);
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> weights(3 * hidden_size * hidden_size, &SE);
+    weights.random();
+    weights.to("/content/weights.json");
     Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE); 
     FeedForward<float> qkv_linear(FeedForward<float>::Config(batch_size * sequence_length, 3 * hidden_size, hidden_size, gemm_algos, true));
-    qkv_linear.ForwardCheckpointPartition(batch_size * sequence_length, &input, &weights, &output, &SE, nq);
+    qkv_linear.ForwardCheckpointPartition(batch_size * sequence_length, &input, &weights, &output, &SE, nq, true);
+    output.to("/content/bert_qkv.json");
     printf("Executed qkv_linear\n");
 }
