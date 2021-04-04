@@ -681,7 +681,6 @@ public:
                                 i);
             
             vals->copyD2H(SE->compute, offset, nq, i);
-            //residual->copyD2H(SE->compute, offset, nq, i);
         }
 	CHECK(cudaThreadSynchronize());
 
