@@ -656,7 +656,7 @@ public:
         {
             offset = i * partition_size * sequence_length * hidden_size; 
     
-            vals->copyH2D(SE->compute, offset, nq, i);
+            //vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
             if (DEBUG)
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
@@ -671,7 +671,7 @@ public:
                                 gamma->get_device_data(),
                                 betta->get_device_data(),
                                 config_.epsilon,
-                                bsz,
+                                bsz/partition_size,
                                 config_.hiddenDim,
                                 SE->compute,
                                 preLayerNorm,
@@ -681,8 +681,9 @@ public:
                                 i);
             
             vals->copyD2H(SE->compute, offset, nq, i);
-            residual->copyD2H(SE->compute, offset, nq, i);
+            //residual->copyD2H(SE->compute, offset, nq, i);
         }
+	CHECK(cudaThreadSynchronize());
 
     }
 
@@ -747,8 +748,8 @@ int main(int argc, char *argv[])
     float layernorm_eps=0.000001; 
     Normalize<float> normalize_input(Normalize<float>::Config(batch_size , sequence_length, hidden_size, layernorm_eps,true));
     normalize_input.SetMeansAndVariance(&norm_mean,&norm_var);
-    normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
-    // normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
+    //normalize_input.ForwardCheckpoint(batch_size*sequence_length,&input_norm,&input,&norm_weights,&norm_bias,&SE);
+    normalize_input.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE);
     input_norm.to("../dump/input_norm.json");
     printf("Executed normalize layer\n"); 
 }
