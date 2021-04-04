@@ -656,7 +656,7 @@ public:
         {
             offset = i * partition_size * sequence_length * hidden_size; 
     
-            vals->copyH2D(SE->compute, offset, nq, i);
+            //vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
             if (DEBUG)
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
@@ -681,7 +681,7 @@ public:
                                 i);
             
             vals->copyD2H(SE->compute, offset, nq, i);
-            residual->copyD2H(SE->compute, offset, nq, i);
+         //   residual->copyD2H(SE->compute, offset, nq, i);
         }
 
     }
