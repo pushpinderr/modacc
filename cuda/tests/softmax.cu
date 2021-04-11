@@ -809,7 +809,7 @@ int main(int argc, char *argv[])
     for ( int i = 0; i < nq; i++ )
         _softmax.ForwardCheckpoint(bsz, &soft_out, &input_mask, &SE, i);
     // soft_out.print_host_data(-50, -1);
+    CHECK(cudaThreadSynchronize());
     soft_out.to("../dumps/softmax_output.json");
-
     printf("Executed Softmax\n");
 }
