@@ -12,6 +12,12 @@ int main(int argc, char *argv[])
     int nq = atoi(argv[4]);
     bool sync_flag = true;
 
+    /* if ( argc > 5 )
+    {
+        if ( std::string(argv[5]) == "sync" )
+            sync_flag = true;
+    } */
+
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
     std::cout << "################################################################" << std::endl;
     std::cout << "batch size=" << batch_size << std::endl;
@@ -26,25 +32,13 @@ int main(int argc, char *argv[])
     FeedForward<float> _qkv_linear(FeedForward<float>::Config(batch_size * sequence_length, 3 * hidden_size, hidden_size, gemm_algos, true));
     
     Stopwatch sw;
-
-    if ( nq > 1)
-    {
-        printf("\x1b[41;1mstarting profiling for fine grained implementation\x1b[0m\n");
-        Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE);
-        sw.restart();
-        _qkv_linear.ForwardCheckpointPartition(batch_size * sequence_length, &input, &weights, &output, &SE, nq, sync_flag);
-        sw.stop();
-        std::cout << "t(" << nq << ")=" << sw.GetTimeInSeconds() << std::endl;
-    }
-    else
-    {
-        printf("\x1b[41;1mstarting profiling for coarse grained implementation\x1b[0m\n");
-        Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE); 
-        sw.restart();
-        _qkv_linear.ForwardCheckpoint(batch_size * sequence_length, &input, &weights, &output, &SE, sync_flag);
-        sw.stop();
-        std::cout << "t=" << sw.GetTimeInSeconds() << std::endl; 
-    }
+    
+    printf("\x1b[41;1mstarting profiling for fine grained implementation\x1b[0m\n");
+    Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE);
+    sw.restart();
+    _qkv_linear.ForwardCheckpointPartition(batch_size * sequence_length, &input, &weights, &output, &SE, nq, sync_flag);
+    sw.stop();
+    std::cout << "t(" << nq << ")=" << sw.GetTimeInSeconds() << std::endl;
     fileWrite("queue_size="+std::to_string(nq)+".txt", std::to_string(sw.GetTimeInSeconds()));
 
     return 0;

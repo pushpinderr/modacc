@@ -302,6 +302,7 @@ public:
                 std::cout << "input offset=" << offset << std::endl;
                 std::cout << "output offset=" << 3*offset << std::endl;
             #endif
+            cublasSetStream(SE->handle, SE->compute[i]);
             cublas_fine_gemm_ex(input_ptr->get_device_data(offset),
                                 weights->get_device_data(),
                                 out->get_device_data(3*offset),

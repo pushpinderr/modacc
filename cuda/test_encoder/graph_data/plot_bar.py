@@ -20,8 +20,9 @@ y = 100*np.mean(y, axis=0)-100
 x = [i for i in range(len(y))]
 
 plt.bar(x,y)
-plt.title("Percent speedup of fine-grained implementation with queue size (averaged over 5 runs)")
-plt.xlabel(col[0])
-plt.ylabel(col[1])
+plt.title("Fine-grained vs Coarse-grained")
+plt.xlabel("number of queues")
+plt.ylabel("Percentage improvement (%)")
 plt.xticks(x, labels=list(dfs[0][col[0]]))
+# plt.yticks([i*20], y)
 plt.show()

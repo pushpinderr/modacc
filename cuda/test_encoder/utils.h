@@ -80,6 +80,10 @@ void fileWrite(std::string fname, std::string str) {
     fout.close();
 }
 
+std::pair <uint64_t, uint64_t> getSeed(uint64_t increment, uint64_t seed) {
+    return std::pair<uint64_t, uint64_t>(seed, increment);
+}
+
 class ScheduleEngine {
     public:
         ScheduleEngine(int num_queues) {
