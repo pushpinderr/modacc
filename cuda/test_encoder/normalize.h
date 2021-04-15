@@ -340,7 +340,6 @@ public:
     }
 
     ~Normalize() {}
-
     void ForwardCheckpoint(int bsz,  // batch * seq
                            Buffer<T>* vals,
                            Buffer<T>* residual,
@@ -400,10 +399,13 @@ public:
         betta->copyH2D(SE->compute);    
         std::cout << "creating queues" << std::endl;
 
+        Stopwatch sw;
+        sw.start();
+        std::cout << "start profiling" << std::endl;
         for (int i = 0; i<nq; i++)
         {
             offset = i * partition_size * sequence_length * hidden_size; 
-    
+            
             vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
             if (DEBUG)
@@ -427,11 +429,11 @@ public:
                                 vars->get_device_data(),
                                 means->get_device_data(),
                                 i);
-            
             vals->copyD2H(SE->compute, offset, nq, i);
-            residual->copyD2H(SE->compute, offset, nq, i);
+            // residual->copyD2H(SE->compute, offset, nq, i);
         }
-
+        sw.stop();
+        std::cout << "end profiling, time=" << sw.GetTimeInSeconds() << std::endl;
         if ( sync )
             CHECK(cudaThreadSynchronize());
     }

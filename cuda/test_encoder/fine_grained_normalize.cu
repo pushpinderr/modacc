@@ -1,4 +1,4 @@
-// %%cuda --name fine_grained_normalize.cu
+%%cuda --name fine_grained_normalize.cu
 #include "utils.h"
 #include "normalize.h"
 
@@ -10,11 +10,13 @@ int main(int argc, char *argv[])
     int hidden_size = atoi(argv[3]);
     int nq = atoi(argv[4]);
     bool sync_flag = true;
+
     /* if ( argc > 5 )
     {
         if ( std::string(argv[5]) == "sync" )
             sync_flag = true;
     } */
+
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
     std::cout << "################################################################" << std::endl;
     std::cout << "batch size=" << batch_size << std::endl;
@@ -38,24 +40,11 @@ int main(int argc, char *argv[])
 
     Stopwatch sw;
 
-    if ( nq > 1)
-    {
-        printf("\x1b[41;1mstarting profiling for fine grained implementation\x1b[0m\n");
-        Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE);
-        sw.restart();
-        _normalize.ForwardCheckpoint(batch_size*sequence_length, &input_norm, &input, &norm_weights, &norm_bias, &SE, sync_flag);
-        sw.stop();
-        std::cout << "t(" << nq << ")=" << sw.GetTimeInSeconds() << std::endl;
-    }
-    else
-    {
-        printf("\x1b[41;1mstarting profiling for coarse grained implementation\x1b[0m\n");
-        Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE); 
-        sw.restart();
-        _normalize.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE, sync_flag);
-        sw.stop();
-        std::cout << "t=" << sw.GetTimeInSeconds() << std::endl; 
-    }
+    Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE); 
+    sw.start();
+    _normalize.ForwardCheckpointPartition(batch_size*sequence_length, nq, &input_norm, &input, &norm_weights, &norm_bias, &SE, sync_flag);
+    sw.stop();
+    std::cout << "t=" << sw.GetTimeInSeconds() << std::endl; 
     fileWrite("queue_size="+std::to_string(nq)+".txt", std::to_string(sw.GetTimeInSeconds()));
 
     return 0;
