@@ -74,6 +74,15 @@ inline int DS_GET_BLOCKS(const int N)
         1);
 }
 
+void fileWrite(std::string fname, std::string str) {
+    std::ofstream fout(fname);
+    fout << str;
+    fout.close();
+}
+
+std::pair <uint64_t, uint64_t> getSeed(uint64_t increment, uint64_t seed) {
+    return std::pair<uint64_t, uint64_t>(seed, increment);
+}
 
 class ScheduleEngine {
     public:
