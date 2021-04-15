@@ -74,6 +74,11 @@ inline int DS_GET_BLOCKS(const int N)
         1);
 }
 
+void fileWrite(std::string fname, std::string str) {
+    std::ofstream fout(fname);
+    fout << str;
+    fout.close();
+}
 
 class ScheduleEngine {
     public:
