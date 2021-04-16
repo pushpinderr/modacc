@@ -268,12 +268,13 @@ void launch_bias_residual_layer_norm<float>(float* vals,
 
     dim3 block_dim(threads);
 
-    if (DEBUG) 
+    #if DEBUG
         std::cout << "queue_index=" << q_index << "\x1b[41;1mlbrf<<<>>>\x1b[0m";
         std::cout << "\x1b[31;1m, vals=" << vals; 
         std::cout << "\x1b[32;1m, residual=" << residual;
         std::cout << "\x1b[33;1m, gamma=" << gamma;
         std::cout << "\x1b[34;1m, betta=" << beta << "\x1b[0m;" << std::endl;
+    #endif
     fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
         vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim);
 }
@@ -401,20 +402,20 @@ public:
 
         Stopwatch sw;
         sw.start();
-        std::cout << "start profiling" << std::endl;
+        // std::cout << "start profiling" << std::endl;
         for (int i = 0; i<nq; i++)
         {
             offset = i * partition_size * sequence_length * hidden_size; 
             
             vals->copyH2D(SE->compute, offset, nq, i);
             residual->copyH2D(SE->compute, offset, nq, i);
-            if (DEBUG)
+            #if DEBUG
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
                 std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
                 std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
                 std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
                 std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
-
+            #endif
             cublasSetStream(SE->handle, SE->compute[i]);
             launch_bias_residual_layer_norm(vals->get_device_data(offset),
                                 residual->get_device_data(offset),
@@ -432,8 +433,8 @@ public:
             vals->copyD2H(SE->compute, offset, nq, i);
             // residual->copyD2H(SE->compute, offset, nq, i);
         }
-        sw.stop();
-        std::cout << "end profiling, time=" << sw.GetTimeInSeconds() << std::endl;
+        // sw.stop();
+        // std::cout << "end profiling, time=" << sw.GetTimeInSeconds() << std::endl;
         if ( sync )
             CHECK(cudaThreadSynchronize());
     }
