@@ -336,6 +336,12 @@ public:
                  bool bwd = false,
                  int q_index = 0)
     {
+        if ( _mask == nullptr ) 
+        {
+            std::cout << "Need to invoke SetMask, as dropout _mask is currently set to nullptr" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+
         launch_dropout<T>(
             out->get_device_data(), vals->get_device_data(), _mask, bsz * _config.dim, _config.dim, _config.RATIO(), SE->getStream(q_index), bwd);
     }
@@ -360,11 +366,11 @@ public:
 
     void SetTrainingMode(bool training) { _config.training = training; }
 
-    void SetMask(uint8_t* mask)
+    void SetMask(Buffer<uint8_t>* mask)
     {
         if (!mask) { throw std::runtime_error("Dropout mask is null."); }
 
-        _mask = mask;
+        _mask = mask->get_device_data();
     }
 
     Config GetConfig() const { return _config; }
