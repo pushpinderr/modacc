@@ -1,4 +1,4 @@
-%%cuda --name Softmax.cu
+// %%cuda --name Softmax.cu
 
 #include <cuda.h>
 #include <math.h>

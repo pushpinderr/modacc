@@ -332,11 +332,12 @@ public:
     void Forward(int bsz, 
                  Buffer<T>* out, 
                  Buffer<T>* vals, 
-                 cudaStream_t stream, 
-                 bool bwd = false)
+                 ScheduleEngine* SE, 
+                 bool bwd = false,
+                 int q_index = 0)
     {
         launch_dropout<T>(
-            out, vals, _mask, bsz * _config.dim, _config.dim, _config.RATIO(), stream, bwd);
+            out->get_device_data(), vals->get_device_data(), _mask, bsz * _config.dim, _config.dim, _config.RATIO(), SE->getStream(q_index), bwd);
     }
 
     /* void ForwardWithBias(int bsz, T* vals, const T* bias, cudaStream_t stream)
