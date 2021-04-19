@@ -312,6 +312,271 @@ template void launch_dropout(__half* out,
                              bool);
 
 template <typename T>
+void launch_dropout(T* out,
+                    const T* bias,
+                    uint8_t* mask,
+                    int batch,
+                    int dim,
+                    float ratio,
+                    cudaStream_t stream)
+{
+    assert(unroll_factor == 4);
+
+    int total_count = batch * dim / unroll_factor;
+
+    dim3 grid_dim = DS_GET_BLOCKS(total_count);
+    dim3 block_dim = DS_CUDA_NUM_THREADS;
+
+    uint64_t inc = (batch * dim) / grid_dim.x / block_dim.x;
+    std::pair<uint64_t, uint64_t> seed = Context::Instance().IncrementOffset(inc);
+
+    dropout_kernel<<<grid_dim, block_dim, 0, stream>>>(
+        total_count, dim, ratio, bias, out, mask, seed);
+}
+
+template void launch_dropout(float*,
+                             const float* bias,
+                             uint8_t* mask,
+                             int batch,
+                             int dim,
+                             float ratio,
+                             cudaStream_t stream);
+template void launch_dropout(__half*,
+                             const __half* bias,
+                             uint8_t* mask,
+                             int batch,
+                             int dim,
+                             float ratio,
+                             cudaStream_t stream);
+
+__global__ void dropout_kernel(const int N,
+                               const int dim,
+                               const float ratio,
+                               const float* input,
+                               const float* residual,
+                               const float* bias,
+                               float* out,
+                               uint8_t* mask,
+                               std::pair<uint64_t, uint64_t> seed)
+{
+    const float scale = 1. / (1. - ratio);
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int tid = threadIdx.x % (dim / unroll_factor);
+
+    curandStatePhilox4_32_10_t state;
+    curand_init(seed.first, idx, seed.second, &state);
+
+    float4* out_cast = reinterpret_cast<float4*>(out);
+    uint32_t* mask_32 = reinterpret_cast<uint32_t*>(mask);
+
+    const float4* bias_cast = reinterpret_cast<const float4*>(bias);
+    const float4* residual_cast = reinterpret_cast<const float4*>(residual);
+    const float4* input_cast = reinterpret_cast<const float4*>(input);
+
+    CUDA_1D_KERNEL_LOOP(j, N)
+    {
+        float4 rand = curand_uniform4(&state);
+
+        uint32_t m_32;
+        uint8_t* m = (uint8_t*)&m_32;
+
+        m[0] = (uint8_t)(rand.x > ratio);
+        m[1] = (uint8_t)(rand.y > ratio);
+        m[2] = (uint8_t)(rand.z > ratio);
+        m[3] = (uint8_t)(rand.w > ratio);
+
+        float4 out_data;
+        float4 b_data = bias_cast[tid];
+        float4 res_data = residual_cast[j];
+        float4 inp_data = input_cast[j];
+
+        out_data.x = (b_data.x + inp_data.x);
+        out_data.y = (b_data.y + inp_data.y);
+        out_data.z = (b_data.z + inp_data.z);
+        out_data.w = (b_data.w + inp_data.w);
+
+        out_data.x = out_data.x * scale * m[0];
+        out_data.y = out_data.y * scale * m[1];
+        out_data.z = out_data.z * scale * m[2];
+        out_data.w = out_data.w * scale * m[3];
+
+        out_data.x += res_data.x;
+        out_data.y += res_data.y;
+        out_data.z += res_data.z;
+        out_data.w += res_data.w;
+
+        mask_32[j] = m_32;
+        out_cast[j] = out_data;
+    }
+    int high_index =
+        ((((N / unroll_factor) - 1) / blockDim.x + 1) * (unroll_factor * blockDim.x)) + threadIdx.x;
+    if (N > high_index) {
+        float4 rand = curand_uniform4(&state);
+        float* rand_data = &(rand.x);
+        int k = 0;
+        for (int i = high_index; i < N; i++) {
+            float x_data = input[i] + bias[threadIdx.x % dim];
+            uint8_t m = (uint8_t)(rand_data[k++] > ratio);
+            x_data = x_data * scale * m;
+            x_data += residual[i];
+
+            out[i] = x_data;
+            mask[i] = m;
+        }
+    }
+}
+
+__global__ void dropout_kernel(const int N,
+                               const int dim,
+                               const float ratio,
+                               const __half* input,
+                               const __half* residual,
+                               const __half* bias,
+                               __half* out,
+                               uint8_t* mask,
+                               std::pair<uint64_t, uint64_t> seed)
+{
+    const float scale = 1. / (1. - ratio);
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    int tid = threadIdx.x % (dim / unroll_factor);
+
+    curandStatePhilox4_32_10_t state;
+    curand_init(seed.first, idx, seed.second, &state);
+
+    float2* out_cast = reinterpret_cast<float2*>(out);
+    uint32_t* mask_32 = reinterpret_cast<uint32_t*>(mask);
+
+    const float2* bias_cast = reinterpret_cast<const float2*>(bias);
+    const float2* residual_cast = reinterpret_cast<const float2*>(residual);
+    const float2* input_cast = reinterpret_cast<const float2*>(input);
+
+    CUDA_1D_KERNEL_LOOP(j, N)
+    {
+        float4 rand = curand_uniform4(&state);
+
+        float2 data_f;
+        __half2* data_h = reinterpret_cast<__half2*>(&data_f);
+
+        float2 bias_f;
+        __half2* bias_h = reinterpret_cast<__half2*>(&bias_f);
+
+        float2 residual_f;
+        __half2* residual_h = reinterpret_cast<__half2*>(&residual_f);
+
+        float2 input_f;
+        __half2* input_h = reinterpret_cast<__half2*>(&input_f);
+
+        bias_f = bias_cast[tid];
+        residual_f = residual_cast[j];
+        input_f = input_cast[j];
+
+        float2 data_h_0 = __half22float2(data_h[0]);
+        float2 data_h_1 = __half22float2(data_h[1]);
+
+        float2 bias_h_0 = __half22float2(bias_h[0]);
+        float2 bias_h_1 = __half22float2(bias_h[1]);
+
+        float2 residual_h_0 = __half22float2(residual_h[0]);
+        float2 residual_h_1 = __half22float2(residual_h[1]);
+
+        float2 input_h_0 = __half22float2(input_h[0]);
+        float2 input_h_1 = __half22float2(input_h[1]);
+
+        data_h_0.x = (bias_h_0.x + input_h_0.x);
+        data_h_0.y = (bias_h_0.y + input_h_0.y);
+        data_h_1.x = (bias_h_1.x + input_h_1.x);
+        data_h_1.y = (bias_h_1.y + input_h_1.y);
+
+        uint32_t m_32;
+        uint8_t* m = (uint8_t*)&m_32;
+
+        m[0] = (uint8_t)(rand.x > ratio);
+        m[1] = (uint8_t)(rand.y > ratio);
+        m[2] = (uint8_t)(rand.z > ratio);
+        m[3] = (uint8_t)(rand.w > ratio);
+
+        data_h_0.x = __float2half(data_h_0.x * scale * m[0]);
+        data_h_0.y = __float2half(data_h_0.y * scale * m[1]);
+        data_h_1.x = __float2half(data_h_1.x * scale * m[2]);
+        data_h_1.y = __float2half(data_h_1.y * scale * m[3]);
+
+        data_h_0.x += residual_h_0.x;
+        data_h_0.y += residual_h_0.y;
+        data_h_1.x += residual_h_1.x;
+        data_h_1.y += residual_h_1.y;
+
+        float2 result_f;
+        __half2* result_h = reinterpret_cast<__half2*>(&result_f);
+
+        result_h[0] = __float22half2_rn(data_h_0);
+        result_h[1] = __float22half2_rn(data_h_1);
+
+        out_cast[j] = result_f;
+        mask_32[j] = m_32;
+    }
+    int high_index =
+        ((((N / unroll_factor) - 1) / blockDim.x + 1) * (unroll_factor * blockDim.x)) + threadIdx.x;
+    if (N > high_index) {
+        float4 rand = curand_uniform4(&state);
+        float* rand_data = &(rand.x);
+        int k = 0;
+        for (int i = high_index; i < N; i++) {
+            float x_data = (float)input[i] + (float)bias[threadIdx.x % dim];
+            uint8_t m = (uint8_t)(rand_data[k++] > ratio);
+            x_data = x_data * scale * m;
+            x_data += (float)residual[i];
+
+            out[i] = __float2half(x_data);
+            mask[i] = m;
+        }
+    }
+}
+
+template <typename T>
+void launch_dropout(T* out,
+                    const T* input,
+                    const T* residual,
+                    const T* bias,
+                    uint8_t* mask,
+                    int batch,
+                    int dim,
+                    float ratio,
+                    cudaStream_t stream)
+{
+    assert(unroll_factor == 4);
+
+    int total_count = batch * dim / unroll_factor;
+    dim3 grid_dim = DS_GET_BLOCKS(total_count);
+    dim3 block_dim = DS_CUDA_NUM_THREADS;
+
+    uint64_t inc = (batch * dim) / grid_dim.x / block_dim.x;
+    std::pair<uint64_t, uint64_t> seed = Context::Instance().IncrementOffset(inc);
+
+    dropout_kernel<<<grid_dim, block_dim, 0, stream>>>(
+        total_count, dim, ratio, input, residual, bias, out, mask, seed);
+}
+
+template void launch_dropout(float*,
+                             const float*,
+                             const float* residual,
+                             const float* bias,
+                             uint8_t* mask,
+                             int batch,
+                             int dim,
+                             float ratio,
+                             cudaStream_t stream);
+template void launch_dropout(__half*,
+                             const __half*,
+                             const __half* residual,
+                             const __half* bias,
+                             uint8_t* mask,
+                             int batch,
+                             int dim,
+                             float ratio,
+                             cudaStream_t stream);
+
+
+template <typename T>
 class Dropout {
 public:
     struct Config {
