@@ -14,6 +14,13 @@
 
 namespace cg = cooperative_groups;
 
+inline __device__ float gelu(const float x) // gelu activation function.
+{
+    const float sqrt_param = 0.79788456080286535587989211986876f;
+    const float mul_param = 0.044715;
+    return x * 0.5f * (1.0f + tanhf(sqrt_param * (x + mul_param * x * x * x)));
+}
+
 __global__ void fused_bias_gelu(const float* input,
                                 const float* bias,
                                 float* vals,
