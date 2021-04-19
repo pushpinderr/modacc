@@ -16,7 +16,8 @@ compile with <br>
 run using run.py (for various queue sizes, fixing the batch size) <br>
 ```./encoder 32 1024 1024 4096 12 4``` <br>
 
-profiling results
+profiling results <br>
 ![alt text](https://github.com/atharva-naik/modacc/blob/cuda/cuda/test_encoder/profiling.png?raw=true)
-on the hardware:
+
+on the hardware: <br>
 ![alt text](https://github.com/atharva-naik/modacc/blob/cuda/cuda/test_encoder/hardware.png?raw=true)
