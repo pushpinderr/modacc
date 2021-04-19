@@ -691,7 +691,7 @@ void launch_dropout(T* out,
     dim3 block_dim = DS_CUDA_NUM_THREADS;
 
     uint64_t inc = (batch * dim) / grid_dim.x / block_dim.x;
-    std::pair<uint64_t, uint64_t> seed = Context::Instance().IncrementOffset(inc);
+    std::pair<uint64_t, uint64_t> seed = getSeed(inc, 42)
 
     dropout_kernel<<<grid_dim, block_dim, 0, stream>>>(
         total_count, dim, ratio, input, residual, bias, out, mask, seed);
