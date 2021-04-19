@@ -482,7 +482,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
     CHECK_INPUT(norm_w);
     CHECK_INPUT(norm_b);
 
-    int bsz = input.size(0);
+    int bsz = input.size(0); // batch_size or batch_size*seq_len
 
     const T *input_ptr = (const T *)input.data_ptr();
     const T *input_mask_ptr = (const T *)input_mask.data_ptr();
@@ -519,7 +519,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
             s_transformer_layers[layer_id]);
 
     int seq_len = layer->GetSeqLength();
-    if (input.size(1) != seq_len) {
+    if (input.size(1) != seq_len) { // sequence length
         seq_len = input.size(1);
         layer->SetSeqLength(seq_len);
     }

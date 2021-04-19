@@ -140,14 +140,15 @@ public:
                             Buffer <T>* input_buf,
                             Buffer <T>* bias,
                             Buffer <T>* output,
-                            ScheduleEngine* SE)
+                            ScheduleEngine* SE,
+                            int q_index=0)
     {
         launch_bias_gelu<T>(input_buf->get_device_data(), 
                             bias->get_device_data(), 
                             output->get_device_data(), 
                             _config.intermediate_size, 
                             bsz, 
-                            SE->compute[0]);
+                            SE->getStream(q_index));
     }
 
 private:
