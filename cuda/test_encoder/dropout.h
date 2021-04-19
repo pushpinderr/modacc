@@ -360,7 +360,15 @@ public:
                          int q_index=0)
     {
         launch_dropout<T>(
-            out, vals, residual, bias, _mask, bsz, _config.dim, _config.RATIO(), SE->getStream(q_index));
+            out->get_device_data(), 
+            vals->get_device_data(), 
+            residual->get_device_data(), 
+            bias->get_device_data(), 
+            _mask, 
+            bsz, 
+            _config.dim, 
+            _config.RATIO(), 
+            SE->getStream(q_index));
     }
 
     bool HasDropout() const { return _config.RATIO() > 0.0; }
