@@ -113,13 +113,21 @@ class Buffer {
     public:
     Buffer(int num_elements, ScheduleEngine *se) {
         this->num_elements = num_elements;
-        printf("Creating host data\n");
+        #if DEBUG
+            printf("Creating host data\n");
+        #endif
         CHECK(cudaMallocHost((void **)&_host_data, sizeof(T)*num_elements));
-        printf("Creating device data\n");
+        #if DEBUG
+            printf("Creating device data\n");
+        #endif
         CHECK(cudaMalloc((void **)&_device_data, sizeof(T)*num_elements));
-        printf("Initializing host data\n");
+        #if DEBUG
+            printf("Initializing host data\n");
+        #endif
         init_ones();
-        printf("Finished creating Buffer\n");
+        #if DEBUG
+            printf("Finished creating Buffer\n");
+        #endif
     }
     T *get_host_data() { return _host_data; }
     T *get_host_data(int offset) { return _host_data + offset; }
