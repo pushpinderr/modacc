@@ -496,7 +496,7 @@ class FeedForward {
         sw.restart();
         offset = 0;
         for (int i = 0; i < se->num_queues; i++) {
-
+           
             std::cout << "Queue " << i << " is in order? "
                       << se->_queues[i].is_in_order() << "\n";
             se->writes.push_back(
@@ -528,8 +528,7 @@ class FeedForward {
     for (int i = 0; i < se->num_queues; i++) {
         se->_queues[i].wait();
     }
-
-    se->print_event_info(se->device_type, "DFS_less_wait");
+    se->print_event_info(se->device_type, "DFS_flush_wait");
 }
 void ForwardPartitionWeightsAsync(Buffer<T> *input_ptr, Buffer<T> *weights,
                                   Buffer<T> *out, ScheduleEngine *se) {
@@ -738,6 +737,7 @@ int main(int argc, char *argv[]) {
         qkv_linear.Forward(&input, &weights, &output, &SE);
         sw.stop();
         printf("Time %fs\n", sw.GetTimeInSeconds());
+
     } else {
         if (device_type < 2) {
             sw.start();
