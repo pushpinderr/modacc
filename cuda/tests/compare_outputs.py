@@ -24,9 +24,11 @@ if match_ctr == len(l1):
     print(f"perfect match!")
 else: 
     print(f"there are {len(l1)-match_ctr} matches!")
+
     df = []
     for i,py,cu in mismatches:
         df.append({"index" : i, "expected" : py, "actual" : cu})
     
     df = pd.DataFrame(df)
     df.to_csv("../dump/mismatches.csv", index=False)
+

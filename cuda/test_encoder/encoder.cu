@@ -1,5 +1,3 @@
-%%cuda --name transformer.cu
-
 #include "gelu.h"
 #include "gemm.h"
 #include "utils.h"
@@ -58,7 +56,7 @@ int main(int argc, char* argv[]) {
     std::cout << "################################################################" << std::endl;
 
     Stopwatch sw;
-    ScheduleEngine SE(30);
+    ScheduleEngine SE(8);
 
     int bsz = batch_size * sequence_length;
     int bsz_seq = batch_size * sequence_length;

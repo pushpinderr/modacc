@@ -1,4 +1,3 @@
-%%cuda --name fine_grained_normalize.cu
 #include "utils.h"
 #include "normalize.h"
 

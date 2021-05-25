@@ -591,10 +591,10 @@ int main(int argc, char *argv[])
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> weights(3 * hidden_size * hidden_size, &SE);
     weights.random();
-    weights.to("/content/weights.json");
+    weights.to("../dump/weights.json");
     Buffer<float> output(3 * hidden_size * batch_size * sequence_length, &SE); 
     FeedForward<float> qkv_linear(FeedForward<float>::Config(batch_size * sequence_length, 3 * hidden_size, hidden_size, gemm_algos, true));
     qkv_linear.ForwardCheckpointPartition(batch_size * sequence_length, &input, &weights, &output, &SE, nq, true);
-    output.to("/content/bert_qkv.json");
+    output.to("../dump/bert_qkv.json");
     printf("Executed qkv_linear\n");
 }
