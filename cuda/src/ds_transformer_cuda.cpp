@@ -20,7 +20,7 @@ template <typename T>
 size_t get_workspace_size(int maxBatchSize, int seq_len, int hidden_size,
                           int intermediate_size, int heads, bool training,
                           bool gelu_checkpoint) {
-    size_t workSpacesize = 4 * (size_t(maxBatchSize) * seq_len * hidden_size);
+    size_t workSpacesize = 4 * (size_t(maxBatchSize) * seq_len * hidden_size); // input+output size 
     if (training) {
         workSpacesize += ((std::max)(
             (size_t(maxBatchSize) * seq_len * intermediate_size),
@@ -114,17 +114,17 @@ void BertTransformerLayer<T>::Forward(
         cudaStreamSynchronize(_stream);
 
     T *workspace = static_cast<T *>(Context::Instance().GetWorkSpace());
-    size_t small_buf_size = bsz * _seq_length * _hidden_size;
+    size_t small_buf_size = bsz * _seq_length * _hidden_size; // batch_size * sequence_length * hidden_size
     T *buf_0 = workspace;
     T *buf_1 = buf_0 + small_buf_size;
 
     if (_normalize_invertible)
-        add_res_ptr = buf_1 + 3 * small_buf_size;
+        add_res_ptr = buf_1 + 3 * small_buf_size; // add residual
     if (_attn_dropout_checkpoint)
-        ctx_bufB_ptr = buf_1 + 4 * small_buf_size;
+        ctx_bufB_ptr = buf_1 + 4 * small_buf_size; // not sure
 
-    int bsz_seq = bsz * _seq_length;
-
+    int bsz_seq = bsz * _seq_length; // bsz in other codes.
+    // if pre_or_postLayerNorm is true then apply Pre-LayerNormalization.
     if (_pre_or_postLayerNorm) {
         if (_layer_norm.UseMean())
             _layer_norm.ForwardCheckpoint(bsz_seq, inp_norm_ptr, input_ptr,
@@ -145,7 +145,7 @@ void BertTransformerLayer<T>::Forward(
 
     launch_bias_add_transform_0213<T>(q_tf_ptr, buf_0, attn_qkvb_ptr, bsz,
                                       _seq_length, _hidden_size, _heads,
-                                      _stream, 3);
+                                      _stream, 3); //coarse grained
 
     int bsz_heads = bsz * _heads;
 
@@ -205,7 +205,7 @@ void BertTransformerLayer<T>::Forward(
                  _cublasHandle);
 
     _gelu.ForwardWithBiasAdd(
-        bsz_seq, (_gelu_checkpoint ? ff2_inp_ptr : gelu_inp_ptr), inter_b_ptr,
+        bsz_seq, (_gelu_checkpoint ? ff2_inp_ptr : gelu_inp_ptr), inter_b_ptr,  // GeLU here
         (_gelu_checkpoint ? ctx_bufB_ptr : ff2_inp_ptr), _stream);
 
     _ff2.Forward(bsz_seq, (_gelu_checkpoint ? ctx_bufB_ptr : ff2_inp_ptr),
@@ -482,7 +482,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
     CHECK_INPUT(norm_w);
     CHECK_INPUT(norm_b);
 
-    int bsz = input.size(0);
+    int bsz = input.size(0); // batch_size or batch_size*seq_len
 
     const T *input_ptr = (const T *)input.data_ptr();
     const T *input_mask_ptr = (const T *)input_mask.data_ptr();
@@ -519,7 +519,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
             s_transformer_layers[layer_id]);
 
     int seq_len = layer->GetSeqLength();
-    if (input.size(1) != seq_len) {
+    if (input.size(1) != seq_len) { // sequence length
         seq_len = input.size(1);
         layer->SetSeqLength(seq_len);
     }
@@ -538,7 +538,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
     auto add_res = (normalize_invertible ? inp_norm : torch::empty_like(input));
     auto attn_o_inp = torch::empty_like(input);
     auto qkv_tf =
-        torch::empty({(bsz * seq_len), output_w.size(0) * 3}, options);
+        torch::empty({(bsz * seq_len), output_w.size(0) * 3}, options); // output_w.size(0) -> hidden size
 
     auto attn_prob_dropout_mask = torch::empty(
         {(bsz * layer->GetNumHeads() * seq_len), seq_len}, uint8_options);
@@ -554,7 +554,7 @@ std::vector<torch::Tensor> ds_transformer_forward(
 
     T *inp_norm_ptr = (T *)inp_norm.data_ptr();
     T *add_res_ptr = (T *)add_res.data_ptr();
-    T *q_tf_ptr = (T *)qkv_tf.data_ptr();
+    T *q_tf_ptr = (T *)qkv_tf.data_ptr(); // 
     T *k_tf_ptr =
         q_tf_ptr + (bsz * seq_len * output_w.size(0)); //(T*)k_tf.data_ptr();
     T *v_tf_ptr =
@@ -562,18 +562,18 @@ std::vector<torch::Tensor> ds_transformer_forward(
     T *attn_o_inp_ptr = (T *)attn_o_inp.data_ptr();
 
     torch::Tensor ff2_inp =
-        torch::empty({(bsz * seq_len), output_w.size(1)}, options);
+        torch::empty({(bsz * seq_len), output_w.size(1)}, options); // maybe no. of heads 
     torch::Tensor gelu_inp =
         (gelu_checkpoint
              ? ff2_inp
-             : torch::empty({(bsz * seq_len), output_w.size(1)}, options));
+             : torch::empty({(bsz * seq_len), output_w.size(1)}, options)); // output_w
     auto ff1_inp = torch::empty_like(input);
-    T *ff2_inp_ptr = (T *)ff2_inp.data_ptr();
-    T *gelu_inp_ptr = (T *)gelu_inp.data_ptr();
+    T *ff2_inp_ptr = (T *)ff2_inp.data_ptr(); 
+    T *gelu_inp_ptr = (T *)gelu_inp.data_ptr(); // for GeLU
     T *ff1_inp_ptr = (T *)ff1_inp.data_ptr();
 
     torch::Tensor soft_out = torch::empty(
-        {(bsz * layer->GetNumHeads() * seq_len), seq_len}, options);
+        {(bsz * layer->GetNumHeads() * seq_len), seq_len}, options); // for softmax
     torch::Tensor ctx_bufB =
         (attn_dropout_checkpoint
              ? soft_out

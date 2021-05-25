@@ -1,0 +1,15 @@
+layer_norm:0.175412
+qkv_linear:0.010854
+launch_bias_add_transform_0213:0.030915
+attention_scores:0.003451
+softmax:0.141725
+attention_probability_dropout:0.014687
+attention_context:0.007594
+launch_transform4d_0213:0.000004
+attention_out_linear:0.010468
+attention_output_dropout:0.004943
+attention_layer_norm:0.012431
+1st_feed_forward_layer:0.016115
+gelu:0.011325
+2nd_feed_forward_layer:0.051900
+layer_output_dropout:0.004701
