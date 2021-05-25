@@ -41,10 +41,11 @@ int main(int argc, char* argv[]) {
     int intermediate_size = atoi(argv[4]);
     int nh = atoi(argv[5]);
     int nq = atoi(argv[6]);
-
+    int print_info=0; 
     bool sync = true;
     float layernorm_eps=0.000001; 
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
+   if(print_info){
     std::cout << "################################################################" << std::endl;
     std::cout << "batch size=" << batch_size << std::endl;
     std::cout << "sequence length=" << sequence_length << std::endl;
@@ -54,7 +55,7 @@ int main(int argc, char* argv[]) {
     std::cout << "number of queues=" << nq << std::endl;
     std::cout << "sync flag=" << sync << std::endl;
     std::cout << "################################################################" << std::endl;
-
+    }
     Stopwatch sw;
     ScheduleEngine SE(8);
 
@@ -166,7 +167,6 @@ int main(int argc, char* argv[]) {
                                  &SE, 
                                  sync);
     sw.stop();
-    printf("\x1b[32;1mExecuted layer norm in %fs\x1b[0m\n", sw.GetTimeInSeconds());
     printf("layer_norm:%f\n", sw.GetTimeInSeconds());
 
     //printf("\x1b[31;1mExecuting qkv_linear\x1b[0m\n");

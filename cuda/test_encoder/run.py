@@ -11,7 +11,8 @@ assert len(sys.argv) > MIN_ARGS, "executable path or mandatory args missing"
 cmd = ""
 for arg in sys.argv[1:]:
     cmd += arg+" "
-
+op=sys.argv[1]
+print(op)
 for qs in nq:
     subprocess.getoutput(f"{cmd} {qs}")
     print(f"{cmd} {qs}")
@@ -35,4 +36,5 @@ for i,speed_up in enumerate(speedups):
 df = []
 for qs,su in zip(nq[1:], speedups):
     df.append({ "queue_size" : qs, "speed_up" : su })
-pd.DataFrame(df).to_csv("graph.csv", index=False)
+output_file=op+".csv"
+pd.DataFrame(df).to_csv(output_file, index=False)
