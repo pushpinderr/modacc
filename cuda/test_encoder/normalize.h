@@ -350,12 +350,19 @@ public:
                            bool sync = false,
                            bool preLayerNorm = false)
     {
-         
+        #if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif 
         vals->copyH2D(SE->compute);
         residual->copyH2D(SE->compute);
         gamma->copyH2D(SE->compute);
         betta->copyH2D(SE->compute);
-
+#if EVENT_PROFILE
+        sw.stop();
+        printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
         launch_bias_residual_layer_norm(vals->get_device_data(),
                                         residual->get_device_data(),
                                         gamma->get_device_data(),
@@ -370,13 +377,23 @@ public:
                                         means->get_device_data(),
                                         0);
 
-
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
         vals->copyD2H(SE->compute);
         residual->copyD2H(SE->compute);
         // gamma->copyD2H(SE->compute);
         // betta->copyD2H(SE->compute);
         if ( sync )
             CHECK(cudaThreadSynchronize());
+#if EVENT_PROFILE
+        sw.stop();
+        printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
+
     }
 
     void ForwardCheckpointPartition(int bsz,  // batch * seq

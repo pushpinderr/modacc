@@ -160,9 +160,17 @@ void launch_transform_0213<float>(float* output,
     int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
     dim3 block_dim(hidden_dim / heads, (heads / head_ext));
     dim3 grid_dim(batch_size, (seq_length * head_ext));
-
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
     transform_0213<float>
         <<<grid_dim, block_dim, 0, stream>>>(output, vals, hidden_dim, seq_length, heads, head_ext);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
 }
 
 template <>
@@ -178,8 +186,17 @@ void launch_transform_0213<__half>(__half* output,
     int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
     dim3 block_dim(hidden_dim / heads, (heads / head_ext));
     dim3 grid_dim(batch_size, (seq_length * head_ext));
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
     transform_0213<__half>
         <<<grid_dim, block_dim, 0, stream>>>(output, vals, hidden_dim, seq_length, heads, head_ext);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
 }
 
 // Bias add
@@ -408,9 +425,17 @@ void launch_bias_add_transform_0213<float>(float* output,
 
     dim3 block_dim(hidden_dim / heads, (heads / head_ext));
     dim3 grid_dim(batch_size, seq_length, (trans_count * head_ext));
-
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
     bias_add_transform_0213<float><<<grid_dim, block_dim, 0, stream>>>(
         output, vals, bias, hidden_dim, seq_length, heads, head_ext);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
 }
 
 template <>
@@ -429,14 +454,32 @@ void launch_bias_add_transform_0213<__half>(__half* output,
         int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
         dim3 block_dim(hidden_dim / heads, (heads / head_ext));
         dim3 grid_dim(batch_size, seq_length, (trans_count * head_ext));
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
         bias_add_transform_0213<__half><<<grid_dim, block_dim, 0, stream>>>(
             output, vals, bias, hidden_dim, seq_length, heads, head_ext);
-    } else {
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+} else {
         dim3 block_dim(hidden_dim / heads, heads, trans_count);
         dim3 grid_dim(batch_size, seq_length / 2);
-        bias_add_transform_0213_v2<<<grid_dim, block_dim, 0, stream>>>(
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif        
+bias_add_transform_0213_v2<<<grid_dim, block_dim, 0, stream>>>(
             output, vals, bias, hidden_dim, seq_length, heads);
-    }
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+}
 }
 
 template <typename T>
@@ -592,8 +635,17 @@ void launch_transform4d_0213<float>(float* out,
     hidden_dim >>= 2;
     dim3 grid_dims(batch_size, heads * ((seq_length - 1) / 8 + 1), trans_count);
     dim3 block_dims(hidden_dim / heads, 8);
-    transform4d_0213<float>
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif    
+transform4d_0213<float>
         <<<grid_dims, block_dims, 0, stream>>>(out, in, heads, seq_length, hidden_dim, 1);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
 }
 
 template <>
@@ -611,12 +663,30 @@ void launch_transform4d_0213<__half>(__half* out,
         int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
         dim3 grid_dims(batch_size, trans_count, (seq_length * head_ext));
         dim3 block_dims(hidden_dim / heads, (heads / head_ext));
-        transform4d_0213<__half><<<grid_dims, block_dims, 0, stream>>>(
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif      
+  transform4d_0213<__half><<<grid_dims, block_dims, 0, stream>>>(
             out, in, heads, seq_length, hidden_dim, head_ext);
-    } else {
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+} else {
         dim3 grid_dims(batch_size, seq_length / 2);
         dim3 block_dims(hidden_dim / heads, heads, trans_count);
-        transform4d_0213_v2<<<grid_dims, block_dims, 0, stream>>>(
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif      
+  transform4d_0213_v2<<<grid_dims, block_dims, 0, stream>>>(
             out, in, heads, seq_length, hidden_dim);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
     }
 }

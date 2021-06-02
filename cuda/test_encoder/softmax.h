@@ -468,15 +468,35 @@ public:
 
     void ForwardCheckpoint(int bsz, Buffer <T>* vals, Buffer <T>* attn_mask, ScheduleEngine* SE, int q_index=0)
     {
-        vals->copyH2D(SE->compute);
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
+	vals->copyH2D(SE->compute);
         attn_mask->copyH2D(SE->compute);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
         launch_attn_softmax<T>(vals->get_device_data(), 
                                attn_mask->get_device_data(), 
                                bsz, 
                                config_.heads, 
                                config_.seq_length, 
                                SE->getStream(q_index));
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
         vals->copyD2H(SE->compute);
+#if EVENT_PROFILE
+        sw.stop();
+        printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
+
     }
     inline size_t GetProbDepth() const { return config_.prob_depth; }
 

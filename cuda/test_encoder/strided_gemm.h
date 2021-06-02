@@ -71,7 +71,10 @@ public:
         int stride_a = _config.m * _config.k;
         int stride_b = _config.n * _config.k;
         int stride_c = _config.m * _config.n;
-
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
         cublas_strided_batched_gemm(SE->handle,
                                     _config.m,
                                     _config.n,
@@ -88,7 +91,12 @@ public:
                                     stride_c,
                                     bsz,
                                     cublasGemmAlgo_t(_config.gemm_algos[0]));
-    }
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+}
 
     /* void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)
     {

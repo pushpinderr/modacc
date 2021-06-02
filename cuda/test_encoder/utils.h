@@ -9,6 +9,10 @@
 #include "cublas_v2.h"
 #include <bits/stdc++.h>
 #include <cuda_runtime_api.h>
+#ifndef EVENT_PROFILE
+#define EVENT_PROFILE 0
+#endif
+
 
 
 #define DEBUG false // flag for debugging.
