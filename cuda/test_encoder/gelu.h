@@ -143,13 +143,24 @@ public:
                             ScheduleEngine* SE,
                             int q_index=0)
     {
+
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
         launch_bias_gelu<T>(input_buf->get_device_data(), 
                             bias->get_device_data(), 
                             output->get_device_data(), 
                             _config.intermediate_size, 
                             bsz, 
                             SE->getStream(q_index));
-    }
+    
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif
+}
 
 private:
     Config _config;

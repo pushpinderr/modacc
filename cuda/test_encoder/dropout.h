@@ -747,10 +747,18 @@ public:
             std::cout << "Need to invoke SetMask, as dropout _mask is currently set to nullptr" << std::endl;
             exit(EXIT_FAILURE);
         }
-
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif
         launch_dropout<T>(
             out->get_device_data(), vals->get_device_data(), _mask, bsz * _config.dim, _config.dim, _config.RATIO(), SE->getStream(q_index), bwd);
-    }
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+}
 
     /* void ForwardWithBias(int bsz, T* vals, const T* bias, cudaStream_t stream)
     {
@@ -765,7 +773,12 @@ public:
                          ScheduleEngine* SE,
                          int q_index=0)
     {
-        launch_dropout<T>(
+#if EVENT_PROFILE
+        Stopwatch sw;
+        sw.restart();
+#endif      
+
+	    launch_dropout<T>(
             out->get_device_data(), 
             vals->get_device_data(), 
             residual->get_device_data(), 
@@ -775,7 +788,12 @@ public:
             _config.dim, 
             _config.RATIO(), 
             SE->getStream(q_index));
-    }
+#if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        sw.restart();
+#endif    
+}
 
     bool HasDropout() const { return _config.RATIO() > 0.0; }
 

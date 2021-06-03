@@ -249,10 +249,18 @@ public:
                            ScheduleEngine* SE,
                            int sync=false)
     {
-
+#if EVENT_PROFILE
+	Stopwatch sw;
+	sw.restart();
+#endif
         input_ptr->copyH2D(SE->compute);
         weights->copyH2D(SE->compute);
         // out->copyH2D(SE->compute);
+#if EVENT_PROFILE
+        sw.stop();
+	printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
+	sw.restart();
+#endif
 
         cublas_fine_gemm_ex(input_ptr->get_device_data(),
                             weights->get_device_data(),
@@ -267,10 +275,20 @@ public:
 
         if ( sync == true )
             CHECK(cudaThreadSynchronize());
-
+#if EVENT_PROFILE
+	sw.stop();
+	printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+	sw.restart();
+#endif
         // input_ptr->copyD2H(SE->compute);
         // weights->copyD2H(SE->compute);
-        out->copyD2H(SE->compute);      
+        out->copyD2H(SE->compute);    
+ #if EVENT_PROFILE
+	sw.stop();
+	printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
+	sw.restart();
+#endif
+ 
 
     }
 
