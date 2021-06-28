@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
     
     //printf("\x1b[31;1mCalculating attention scores\x1b[0m\n");
     sw.restart();
-    _attn_scores.Backward(bsz_heads, &soft_out, &keys, &queries, &SE);
+    _attn_scores.Forward(bsz_heads, &soft_out, &keys, &queries, &SE);
     CHECK(cudaThreadSynchronize());
     sw.stop();
     printf("attention_scores:%f\n", sw.GetTimeInSeconds());
@@ -213,14 +213,14 @@ int main(int argc, char* argv[]) {
     _attn_prob_dropout.SetMask(&attn_prob_dropout_mask);
     //printf("\x1b[31;1mExecuting attention probability dropout\x1b[0m\n");
     sw.restart();
-    _attn_prob_dropout.Backward(bsz_heads * sequence_length, &context, &soft_out, &SE);
+    _attn_prob_dropout.Forward(bsz_heads * sequence_length, &context, &soft_out, &SE);
     CHECK(cudaThreadSynchronize());
     sw.stop();
     printf("attention_probability_dropout:%f\n", sw.GetTimeInSeconds());
 
     //printf("\x1b[31;1mCalculating attention context\x1b[0m\n");
     sw.restart();
-    _attn_context.Backward(bsz_heads, &buf_1, &values, &context, &SE);
+    _attn_context.Forward(bsz_heads, &buf_1, &values, &context, &SE);
     CHECK(cudaThreadSynchronize());
     sw.stop();
     printf("attention_context:%f\n", sw.GetTimeInSeconds());
