@@ -222,6 +222,74 @@ int cublas_fine_gemm_ex(const T* input_ptr,
                           algo);
 }
 
+template <typename T>
+void launch_fuse_transpose_bias_kernel(const T* inp,
+                                       T* out,
+                                       int rows,
+                                       int cols
+                                       );
+
+template <typename T>
+__global__ void column_sum_reduce(const T* __restrict__ inp,
+                                  T* __restrict__ out,
+                                  int rows,
+                                  int width);
+
+template <>
+void launch_fuse_transpose_bias_kernel<float>(const float* inp,
+                                              float* out,
+                                              int rows,
+                                              int cols
+                                              )
+{
+    dim3 grid_dim((cols - 1) / TILE_DIM + 1);
+    dim3 block_dim(TILE_DIM, TILE_DIM);
+
+    column_sum_reduce<float><<<grid_dim, block_dim, 0>>>(inp, out, rows, cols);
+}
+
+template <typename T>
+__global__ void column_sum_reduce(const T* __restrict__ inp,
+                                  T* __restrict__ out,
+                                  int rows,
+                                  int width)
+{
+    __shared__ float tile[TILE_DIM][TILE_DIM + 1];
+
+    cg::thread_block b = cg::this_thread_block();
+    cg::thread_block_tile<TILE_DIM> g = cg::tiled_partition<TILE_DIM>(b);
+
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+
+    int y_stride = width * TILE_DIM;
+
+    float localSum = 0;
+
+    if (idx < width) {
+        int offset = threadIdx.y * width + idx;
+        for (int r = threadIdx.y; r < rows; r += TILE_DIM) {
+            localSum += (float)inp[offset];
+            offset += y_stride;
+        }
+    }
+
+    tile[threadIdx.x][threadIdx.y] = localSum;
+
+    __syncthreads();
+
+    float sum = tile[threadIdx.y][threadIdx.x];
+
+#ifndef __STOCHASTIC_MODE__
+    __syncthreads();
+#endif
+
+    for (int i = 1; i < TILE_DIM; i <<= 1) sum += g.shfl_down(sum, i);
+
+    if (threadIdx.x == 0) {
+        int pos = blockIdx.x * TILE_DIM + threadIdx.y;
+        if (pos < width) out[pos] = sum;
+    }
+}
 
 template <typename T>
 class FeedForward {
@@ -339,6 +407,71 @@ public:
         if ( sync == true )
             CHECK(cudaThreadSynchronize());
     }
+
+void Backward(int bsz,
+                  Buffer<T>* out_grad,
+		  Buffer<T>* input_ptr,
+		  Buffer<T>* weights,
+                  Buffer<T>* weights_grad,
+                  Buffer<T>* bias_grad,
+                  int sync,
+                  ScheduleEngine* SE,
+                  
+                  Buffer<T>* inp_grad_out = nullptr,
+                  Buffer<T>* out_grad_trans_out = nullptr)
+    {
+        float alpha = (T)1.0, beta = (T)0.0;
+       // cublas_gemm_ex(SE,
+                       //CUBLAS_OP_N,
+                       //CUBLAS_OP_T,
+           //            config_.inputSize,
+         //              config_.outputSize,
+             //          bsz,
+                       //&alpha,
+                       //&beta,
+               //        input_ptr->get_device_data(),
+                 //      out_grad->get_device_data(),
+                   //    weights_grad->get_device_data(),
+                     //  cublasGemmAlgo_t(config_.gemm_algos[1]));
+	cublas_gemm_ex(input_ptr->get_device_data(), 
+		weights_grad->get_device_data(),
+		out_grad->get_device_data(),
+		config_.outputSize,
+		bsz,
+		config_.inputSize,
+		SE->handle,
+		SE->compute,
+		0,
+		cublasGemmAlgo_t(config_.gemm_algos[0]));
+
+
+        //cublas_gemm_ex(SE,
+                       //CUBLAS_OP_N,
+                       //CUBLAS_OP_N,
+          //             config_.inputSize,
+            //           bsz,
+              //         config_.outputSize,
+                       //&alpha,
+                       //&beta,
+                //       weights->get_device_data(),
+                  //     out_grad->get_device_data(),
+                    //   inp_grad_out->get_device_data(),
+                      // cublasGemmAlgo_t(config_.gemm_algos[2]));
+
+cublas_gemm_ex(input_ptr->get_device_data(), 
+		weights_grad->get_device_data(),
+		out_grad->get_device_data(),
+		config_.outputSize,
+		bsz,
+		config_.inputSize,
+		SE->handle,
+		SE->compute,
+		0,
+		cublasGemmAlgo_t(config_.gemm_algos[0]));
+
+        launch_fuse_transpose_bias_kernel<T>(out_grad, bias_grad, bsz, config_.outputSize);
+    }
+
 
 private:
     Config config_;
