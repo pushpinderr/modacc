@@ -23,13 +23,11 @@ public:
         bool normalize_invertible;
         bool gelu_checkpoint; 
         bool stochastic_mode;
-
         void read(std::string fname) {}
     }
     BertEncoder(Config config) : config_(config) {}
     ~BertEncoder() {}
     void Forward() {}
-
 private:
     Config config_;
 } */
@@ -207,6 +205,37 @@ int main(int argc, char* argv[]) {
     Buffer<float> layer_dropout_buf = _layer_output_dropout.HasDropout()
                                       ? buf_0
                                       : buf_1;
+
+    if (!_pre_or_postLayerNorm) {
+        if (_layer_norm.UseMean())
+            _layer_norm.Backward(bsz_seq,
+                                    grad_output_ptr,
+                                    norm_w_ptr,
+                                    grad_norm_w_ptr,
+                                    grad_norm_b_ptr,
+                                    streams,
+                                    buf_1,
+                                    inp_norm_ptr);
+        else
+            _layer_norm.Backward(bsz_seq,
+                                    grad_output_ptr,
+                                    norm_w_ptr,
+                                    norm_b_ptr,
+                                    grad_norm_w_ptr,
+                                    grad_norm_b_ptr,
+                                    streams,
+                                    buf_1,
+                                    output_ptr);
+    }
+
+    if (_pre_or_postLayerNorm)
+        _layer_output_dropout.Backward(bsz_seq, buf_0, grad_output_ptr, _stream);
+    else
+        _layer_output_dropout.Backward(bsz_seq, buf_0, buf_1, _stream);
+
+    if (_gelu_checkpoint)
+        _gelu.ForwardWithBiasAdd(bsz_seq, ff2_inp_ptr, inter_b_ptr, buf_2, _stream);
+    
     _ff2.Backward(bsz_seq,
                   &layer_dropout_buf,
                   &ff2_inp_ptr,
@@ -217,6 +246,9 @@ int main(int argc, char* argv[]) {
                   &SE,
                   &ff2_buf);
     sw.stop();
+
+    _gelu.Backward(
+        bsz_seq, ff2_buf, (_gelu_checkpoint ? ff2_inp_ptr : gelu_inp_ptr), inter_b_ptr, _stream);
 
     sw.restart();
     _ff1.Backward(bsz_seq,
@@ -229,6 +261,142 @@ int main(int argc, char* argv[]) {
                   &SE,
                   &buf_3);
     sw.stop();
+
+    if (!_pre_or_postLayerNorm)
+        launch_fused_add2<T>(buf_2, buf_3, buf_1, bsz, _seq_length, _hidden_size, _stream);
+        
+        if (_pre_or_postLayerNorm) {
+            if (_attn_layer_norm.UseMean())
+                _attn_layer_norm.BackwardFusedAdd(bsz_seq,
+                                                  buf_3,
+                                                  grad_output_ptr,
+                                                  attn_nw_ptr,
+                                                  grad_attn_nw_ptr,
+                                                  grad_attn_nb_ptr,
+                                                  streams,
+                                                  buf_0,
+                                                  add_res_ptr);
+    
+            else
+                _attn_layer_norm.BackwardFusedAdd(bsz_seq,
+                                                  buf_3,
+                                                  grad_output_ptr,
+                                                  attn_nw_ptr,
+                                                  attn_nb_ptr,
+                                                  grad_attn_nw_ptr,
+                                                  grad_attn_nb_ptr,
+                                                  streams,
+                                                  buf_0,
+                                                  ff1_inp_ptr);
+        } else {
+            if (_attn_layer_norm.UseMean())
+                _attn_layer_norm.Backward(bsz_seq,
+                                          buf_2,
+                                          attn_nw_ptr,
+                                          grad_attn_nw_ptr,
+                                          grad_attn_nb_ptr,
+                                          streams,
+                                          buf_0,
+                                          add_res_ptr);
+    
+            else
+                _attn_layer_norm.Backward(bsz_seq,
+                                          buf_2,
+                                          attn_nw_ptr,
+                                          attn_nb_ptr,
+                                          grad_attn_nw_ptr,
+                                          grad_attn_nb_ptr,
+                                          streams,
+                                          buf_0,
+                                          ff1_inp_ptr);
+        }
+    
+        _attn_output_dropout.Backward(bsz_seq, buf_2, buf_0, _stream);
+    
+        T* attn_output_dropout_buf = _attn_output_dropout.HasDropout() ? buf_2 : buf_0;
+    
+        _attn_out_linear.Backward(bsz_seq,
+                                  attn_output_dropout_buf,
+                                  attn_o_inp_ptr,
+                                  attn_ow_ptr,
+                                  grad_attn_ow_ptr,
+                                  grad_attn_ob_ptr,
+                                  _cublasHandle,
+                                  _stream,
+                                  buf_1);
+    
+        launch_transform_0213<T>(buf_2, buf_1, bsz, _seq_length, _hidden_size, _heads, _stream);
+    
+        if (_attn_prob_dropout.HasDropout()) {
+            if (_attn_dropout_checkpoint)
+                _attn_prob_dropout.Forward(
+                    bsz_heads * _seq_length, ctx_bufB_ptr_recomp, soft_out_ptr, _stream, true);
+    
+            _attn_context.Backward(bsz_heads,
+                                   buf_2,
+                                   v_tf_ptr,
+                                   (_attn_dropout_checkpoint ? ctx_bufB_ptr_recomp : ctx_bufB_ptr),
+                                   _cublasHandle,
+                                   buf_3,
+                                   ff2_buf);
+        } else
+            _attn_context.Backward(
+                bsz_heads, buf_2, v_tf_ptr, soft_out_ptr, _cublasHandle, buf_3, ff2_buf);
+    
+        _attn_prob_dropout.Backward(bsz_heads * _seq_length, ff2_buf, _stream);
+    
+        _softmax.Backward(bsz, ff2_buf, soft_out_ptr, _stream);
+    
+        _attn_scores.Backward(bsz_heads, ff2_buf, k_tf_ptr, q_tf_ptr, _cublasHandle, buf_2, buf_1);
+    
+        launch_transform4d_0213(ff2_buf, buf_1, bsz, _heads, _seq_length, _hidden_size, _stream, 3);
+    
+        if (_pre_or_postLayerNorm)
+            _qkv_linear.Backward(bsz_seq,
+                                 ff2_buf,
+                                 inp_norm_ptr,
+                                 attn_qkvw_ptr,
+                                 grad_attn_qkvw_ptr,
+                                 grad_attn_qkvb_ptr,
+                                 _cublasHandle,
+                                 _stream,
+                                 buf_2);
+        else
+            _qkv_linear.Backward(bsz_seq,
+                                 ff2_buf,
+                                 input_ptr,
+                                 attn_qkvw_ptr,
+                                 grad_attn_qkvw_ptr,
+                                 grad_attn_qkvb_ptr,
+                                 _cublasHandle,
+                                 _stream,
+                                 buf_2);
+    
+        if (_pre_or_postLayerNorm) {
+            if (_layer_norm.UseMean())
+                _layer_norm.BackwardFusedAdd(bsz_seq,
+                                             buf_2,
+                                             buf_0,
+                                             norm_w_ptr,
+                                             grad_norm_w_ptr,
+                                             grad_norm_b_ptr,
+                                             streams,
+                                             grad_input_ptr,
+                                             input_ptr);
+    
+            else
+                _layer_norm.BackwardFusedAdd(bsz_seq,
+                                             buf_2,
+                                             buf_0,
+                                             norm_w_ptr,
+                                             norm_b_ptr,
+                                             grad_norm_w_ptr,
+                                             grad_norm_b_ptr,
+                                             streams,
+                                             grad_input_ptr,
+                                             inp_norm_ptr);
+        } else
+            launch_fused_add2<T>(grad_input_ptr, buf_2, buf_0, bsz, _seq_length, _hidden_size, _stream);
 
     printf("Backward Pass Ends in: %f\n", sw.GetTimeInSeconds());
       
