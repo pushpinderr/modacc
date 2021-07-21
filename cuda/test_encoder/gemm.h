@@ -22,6 +22,8 @@ namespace cg = cooperative_groups;
 
 #define FINAL_MASK 0xffffffff
 
+bool useMean = true;
+
 template <typename T>
 void launch_fused_add2(T* out,
                        const T* inp1,
@@ -51,7 +53,6 @@ void launch_fused_add3(T* out,
                        int seq_length,
                        int hidden_size,
                        cudaStream_t& stream);
-© 2021 GitHub, Inc.
 
 template <typename T>
 void launch_layerNorm_backward(const T* out_grad,
@@ -80,7 +81,10 @@ void launch_layerNorm_backward(const T* out_grad,
                                bool invertible = false,
                                const T* betta = nullptr);
 
-inline bool UseMean() const { return config_.useMean; }
+inline bool UseMean()
+{
+    return useMean;
+}
 
 template <typename T>
 void launch_dropout_grad(T* vals, uint8_t* mask, int total_count, float ratio, cudaStream_t stream);
@@ -92,18 +96,22 @@ void launch_dropout_grad(T* vals_out,
                          int total_count,
                          float ratio,
                          cudaStream_t stream);
-
+template <typename T>
 void Backward(int bsz, T* d_vals, cudaStream_t stream)
 {
     launch_dropout_grad<T>(d_vals, _mask, bsz * _config.dim, _config.RATIO(), stream);
 }
 
+template <typename T>
 void Backward(int bsz, T* d_vals_out, const T* d_vals, cudaStream_t stream)
 {
     launch_dropout_grad<T>(d_vals_out, d_vals, _mask, bsz * _config.dim, _config.RATIO(), stream);
 }
 
-bool HasDropout() const { return _config.RATIO() > 0.0; }
+bool HasDropout()
+{ 
+    return _config.RATIO() > 0.0;
+}
 
 template <typename T>
 void launch_attn_softmax_backward_v2(T* out_grad,
@@ -113,18 +121,17 @@ void launch_attn_softmax_backward_v2(T* out_grad,
                                      int seq_length,
                                      cudaStream_t stream);
 
+template <typename T>
 void Backward(int bsz, T* out_grad, const T* soft_out, cudaStream_t stream)
 {
-        launch_attn_softmax_backward_v2<T>(
-            out_grad, soft_out, bsz, config_.heads, config_.seq_length, stream);
+    launch_attn_softmax_backward_v2<T>(out_grad, soft_out, bsz, config_.heads, config_.seq_length, stream);
 }
 
-
+template <typename T>
 void Forward(int bsz, T* out, const T* vals, cudaStream_t stream, bool bwd = false)
-    {
-        launch_dropout<T>(
-            out, vals, _mask, bsz * _config.dim, _config.dim, _config.RATIO(), stream, bwd);
-    }
+{
+    launch_dropout<T>(out, vals, _mask, bsz * _config.dim, _config.dim, _config.RATIO(), stream, bwd);
+}
 
 template <typename T>
 void launch_layerNorm_backward_fused_add(const T* out_grad1,
@@ -153,8 +160,8 @@ void launch_layerNorm_backward_fused_add(const T* out_grad1,
                                          cudaStream_t stream[2],
                                          bool invertible = false,
                                          const T* betta = nullptr);
-
-    void BackwardFusedAdd(int bsz,
+template <typename T>
+void BackwardFusedAdd(int bsz,
                           const T* out_grad1,
                           const T* out_grad2,
                           const T* gamma,
@@ -178,7 +185,8 @@ void launch_layerNorm_backward_fused_add(const T* out_grad1,
                                             stream);
     }
 
-    void BackwardFusedAdd(int bsz,
+template <typename T>
+void BackwardFusedAdd(int bsz,
                           const T* out_grad1,
                           const T* out_grad2,
                           const T* gamma,
@@ -211,7 +219,7 @@ void launch_d_gelu(T* d_output,
                    int intermediate_size,
                    int batch_size,
                    cudaStream_t stream);
-
+template <typename T>
 void Backward(int bsz, T* d_output, const T* input_buf, const T* bias, cudaStream_t stream)
 {
     launch_d_gelu<T>(d_output, input_buf, bias, _config.intermediate_size, bsz, stream);
@@ -226,6 +234,7 @@ void launch_bias_gelu(const T* input,
                       int batch_size,
                       cudaStream_t stream);
 
+template <typename T>
 void ForwardWithBiasAdd(int bsz,
                             const T* input_buf,
                             const T* bias,
