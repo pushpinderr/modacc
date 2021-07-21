@@ -67,36 +67,47 @@ int main(int argc, char* argv[]) {
                                                               hidden_size,
                                                               gemm_algos,
                                                               true));
+
     FeedForward<float> _attn_out_linear(FeedForward<float>::Config(bsz, 
                                                               hidden_size, 
                                                               hidden_size,
                                                               gemm_algos,
                                                               true));
+
     Normalize<float> _attn_layer_norm(Normalize<float>::Config(batch_size, 
                                                                sequence_length,
                                                                hidden_size,
                                                                layernorm_eps,
                                                                true));
+
     Normalize<float> _layer_norm(Normalize<float>::Config(batch_size, 
                                                                sequence_length,
                                                                hidden_size,
                                                                layernorm_eps,
                                                                true));
+
     FeedForward<float> _ff1(FeedForward<float>::Config(bsz, 
                                                        intermediate_size,
                                                        hidden_size,
                                                        gemm_algos,
                                                        true));
+
     FeedForward<float> _ff2(FeedForward<float>::Config(bsz, 
                                                        hidden_size,
                                                        intermediate_size,
                                                        gemm_algos,
                                                        true));
+
     Softmax<float> _softmax(Softmax<float>::Config(batch_size, nh, sequence_length));
+    
     Gelu<float> _gelu{Gelu<float>::Config(intermediate_size)};
+    
     Dropout<float> _attn_prob_dropout(Dropout<float>::Config(0.2, sequence_length));
+    
     Dropout <float> _attn_output_dropout(Dropout<float>::Config(0.2, hidden_size));
-    Dropout <float> _layer_output_dropout(Dropout<float>::Config(0.2, hidden_size));    
+    
+    Dropout <float> _layer_output_dropout(Dropout<float>::Config(0.2, hidden_size));
+
     StridedBatchGemm<float> _attn_scores(StridedBatchGemm<float>::Config(batch_size * nh,
                                                                          sequence_length,
                                                                          sequence_length,
@@ -106,6 +117,7 @@ int main(int argc, char* argv[]) {
                                                                          CUBLAS_OP_T,
                                                                          CUBLAS_OP_N,
                                                                          gemm_algos));
+
     StridedBatchGemm<float> _attn_context(StridedBatchGemm<float>::Config(batch_size * nh,
                                                          hidden_size / nh,
                                                          sequence_length,
@@ -115,7 +127,6 @@ int main(int argc, char* argv[]) {
                                                          CUBLAS_OP_N,
                                                          CUBLAS_OP_N,
                                                          gemm_algos));
-
 
     Buffer<float> input(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> input_norm(batch_size * sequence_length * hidden_size, &SE);
