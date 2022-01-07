@@ -18,8 +18,7 @@ public:
         int intermediate_size;
         float hidden_output_dropout_ratio; 
         bool pre_or_postLayerNorm;
-        std::vector<std::array<int, 3>> gemm_algos;
-        bool attn_dropout_checkpoint; 
+ m        bool attn_dropout_checkpoint; 
         bool normalize_invertible;
         bool gelu_checkpoint; 
         bool stochastic_mode;
@@ -42,25 +41,33 @@ int main(int argc, char* argv[]) {
     int print_info=0; 
     bool sync = true;
     float layernorm_eps=0.000001; 
+    bool _pre_or_postLayerNorm = false;
+    bool _gelu_checkpoint = false;
+    bool _attn_dropout_checkpoint= false;
+
+    cublasHandle_t _cublasHandle;
+
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
-   if(print_info){
-    std::cout << "################################################################" << std::endl;
-    std::cout << "batch size=" << batch_size << std::endl;
-    std::cout << "sequence length=" << sequence_length << std::endl;
-    std::cout << "hidden layer size=" << hidden_size << std::endl;
-    std::cout << "intermediate size=" << intermediate_size << std::endl;
-    std::cout << "number of heads=" << nh << std::endl;
-    std::cout << "number of queues=" << nq << std::endl;
-    std::cout << "sync flag=" << sync << std::endl;
-    std::cout << "################################################################" << std::endl;
+
+    if(print_info){
+        std::cout << "################################################################" << std::endl;
+        std::cout << "batch size=" << batch_size << std::endl;
+        std::cout << "sequence length=" << sequence_length << std::endl;
+        std::cout << "hidden layer size=" << hidden_size << std::endl;
+        std::cout << "intermediate size=" << intermediate_size << std::endl;
+        std::cout << "number of heads=" << nh << std::endl;
+        std::cout << "number of queues=" << nq << std::endl;
+        std::cout << "sync flag=" << sync << std::endl;
+        std::cout << "################################################################" << std::endl;
     }
+
     Stopwatch sw;
     ScheduleEngine SE(8);
 
     int bsz = batch_size * sequence_length;
     int bsz_seq = batch_size * sequence_length;
     int bsz_heads = batch_size * nh;
-    Buffer<float> small_buf_size(bsz * sequence_length * hidden_size, &SE);
+    size_t small_buf_size = bsz * sequence_length * hidden_size;
 
     FeedForward<float> _qkv_linear(FeedForward<float>::Config(bsz, 
                                                               3 * hidden_size, 
@@ -199,6 +206,8 @@ int main(int argc, char* argv[]) {
     Buffer<float> norm_b_ptr(hidden_size, &SE);
 
     Buffer<float> ff2_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
+    Buffer<float> gelu_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
+    
     Buffer<float> output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_b_ptr(hidden_size, &SE);
@@ -213,53 +222,68 @@ int main(int argc, char* argv[]) {
     _layer_norm.SetMeansAndVariance(&norm_mean, &norm_var);
     _attn_layer_norm.SetMeansAndVariance(&attn_norm_mean, &attn_norm_var);
 
+    sw.start();
+    if (!_pre_or_postLayerNorm) {
+        if (_layer_norm.UseMean()) {
+            _layer_norm.Backward(bsz_seq,
+                                    &grad_output_ptr,
+                                    &norm_w_ptr,
+                                    &grad_norm_w_ptr,
+                                    &grad_norm_b_ptr,
+                                    &SE,
+                                    &buf_1,
+                                    &inp_norm_ptr);
+        } else {
+            _layer_norm.Backward(bsz_seq,
+                                    &grad_output_ptr,
+                                    &norm_w_ptr,
+                                    &norm_b_ptr,
+                                    &grad_norm_w_ptr,
+                                    &grad_norm_b_ptr,
+                                    &SE,
+                                    &buf_1,
+                                    &output_ptr);
+        }
+    }
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _layer_norm.Backward(): %f\n", sw.GetTimeInSeconds());
+    
+    sw.restart();
+    if (_pre_or_postLayerNorm) {
+        _layer_output_dropout.Backward(bsz_seq, &buf_0, &grad_output_ptr, &SE);
+    } else {
+        _layer_output_dropout.Backward(bsz_seq, &buf_0, &buf_1, &SE);
+    }
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _layer_output_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
+
     Buffer<float> layer_dropout_buf = _layer_output_dropout.HasDropout()
                                       ? buf_0
-                                      : buf_1;
+                                      : (_pre_or_postLayerNorm ? grad_output_ptr : buf_1);  
 
-    if (!_pre_or_postLayerNorm) {
-        if (_layer_norm.UseMean())
-            _layer_norm.Backward(bsz_seq,
-                                    grad_output_ptr,
-                                    norm_w_ptr,
-                                    grad_norm_w_ptr,
-                                    grad_norm_b_ptr,
-                                    streams,
-                                    buf_1,
-                                    inp_norm_ptr);
-        else
-            _layer_norm.Backward(bsz_seq,
-                                    grad_output_ptr,
-                                    norm_w_ptr,
-                                    norm_b_ptr,
-                                    grad_norm_w_ptr,
-                                    grad_norm_b_ptr,
-                                    streams,
-                                    buf_1,
-                                    output_ptr);
+    if (_gelu_checkpoint) {
+        sw.restart();
+        _gelu.ForwardWithBiasAdd(bsz_seq, &ff2_inp_ptr, &inter_b, &buf_2, &SE);
+        sw.stop();
+        printf("Coarse Grained Backward Pass - _gelu.ForwardWithBiasAdd(): %f\n", sw.GetTimeInSeconds());
     }
 
-    if (_pre_or_postLayerNorm)
-        _layer_output_dropout.Backward(bsz_seq, buf_0, grad_output_ptr, _stream);
-    else
-        _layer_output_dropout.Backward(bsz_seq, buf_0, buf_1, _stream);
-
-    if (_gelu_checkpoint)
-        _gelu.ForwardWithBiasAdd(bsz_seq, ff2_inp_ptr, inter_b_ptr, buf_2, _stream);
-    
+    sw.restart();
     _ff2.Backward(bsz_seq,
-                  &layer_dropout_buf,
-                  &ff2_inp_ptr,
-                  &output_w_ptr,
-                  &grad_output_w_ptr,
-                  &grad_output_b_ptr,
-                  true,
-                  &SE,
-                  &ff2_buf);
+                    &layer_dropout_buf,
+                    (_gelu_checkpoint ? &buf_2 : &ff2_inp_ptr),
+                    &output_w_ptr,
+                    &grad_output_w_ptr,
+                    &grad_output_b_ptr,
+                    &SE,
+                    &ff2_buf);
     sw.stop();
+    printf("Coarse Grained Backward Pass - _ff2.Backward(): %f\n", sw.GetTimeInSeconds());
 
-    _gelu.Backward(
-        bsz_seq, ff2_buf, (_gelu_checkpoint ? ff2_inp_ptr : gelu_inp_ptr), inter_b_ptr, _stream);
+    sw.restart();
+    _gelu.Backward(bsz_seq, &ff2_buf, (_gelu_checkpoint ? &ff2_inp_ptr : &gelu_inp_ptr), &inter_b, &SE);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _gelu.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
     _ff1.Backward(bsz_seq,
@@ -268,149 +292,187 @@ int main(int argc, char* argv[]) {
                   &inter_w_ptr,
                   &grad_inter_w_ptr,
                   &grad_inter_b_ptr,
-                  true,
                   &SE,
                   &buf_3);
     sw.stop();
+    printf("Coarse Grained Backward Pass - _ff1.Backward(): %f\n", sw.GetTimeInSeconds());
 
-    if (!_pre_or_postLayerNorm)
-        launch_fused_add2<T>(buf_2, buf_3, buf_1, bsz, _seq_length, _hidden_size, _stream);
-        
-        if (_pre_or_postLayerNorm) {
-            if (_attn_layer_norm.UseMean())
-                _attn_layer_norm.BackwardFusedAdd(bsz_seq,
-                                                  buf_3,
-                                                  grad_output_ptr,
-                                                  attn_nw_ptr,
-                                                  grad_attn_nw_ptr,
-                                                  grad_attn_nb_ptr,
-                                                  streams,
-                                                  buf_0,
-                                                  add_res_ptr);
-    
-            else
-                _attn_layer_norm.BackwardFusedAdd(bsz_seq,
-                                                  buf_3,
-                                                  grad_output_ptr,
-                                                  attn_nw_ptr,
-                                                  attn_nb_ptr,
-                                                  grad_attn_nw_ptr,
-                                                  grad_attn_nb_ptr,
-                                                  streams,
-                                                  buf_0,
-                                                  ff1_inp_ptr);
+    if (!_pre_or_postLayerNorm) {
+        sw.restart();
+        launch_fused_add2<float>(buf_2.get_device_data(), buf_3.get_device_data(), buf_1.get_device_data(), bsz, sequence_length, hidden_size, SE.getStream(0));
+        sw.stop();
+        printf("Coarse Grained Backward Pass - launch_fused_add2(): %f\n", sw.GetTimeInSeconds());        
+    }
+
+    sw.restart();
+    if (_pre_or_postLayerNorm) {
+        if (_attn_layer_norm.UseMean()) {
+            _attn_layer_norm.BackwardFusedAdd(bsz_seq,
+                                            &buf_3,
+                                            &grad_output_ptr,
+                                            &attn_nw_ptr,
+                                            &grad_attn_nw_ptr,
+                                            &grad_attn_nb_ptr,
+                                            &SE,
+                                            &buf_0,
+                                            &add_res_ptr);
         } else {
-            if (_attn_layer_norm.UseMean())
-                _attn_layer_norm.Backward(bsz_seq,
-                                          buf_2,
-                                          attn_nw_ptr,
-                                          grad_attn_nw_ptr,
-                                          grad_attn_nb_ptr,
-                                          streams,
-                                          buf_0,
-                                          add_res_ptr);
-    
-            else
-                _attn_layer_norm.Backward(bsz_seq,
-                                          buf_2,
-                                          attn_nw_ptr,
-                                          attn_nb_ptr,
-                                          grad_attn_nw_ptr,
-                                          grad_attn_nb_ptr,
-                                          streams,
-                                          buf_0,
-                                          ff1_inp_ptr);
+            _attn_layer_norm.BackwardFusedAdd(bsz_seq,
+                                            &buf_3,
+                                            &grad_output_ptr,
+                                            &attn_nw_ptr,
+                                            &attn_nb_ptr,
+                                            &grad_attn_nw_ptr,
+                                            &grad_attn_nb_ptr,
+                                            &SE,
+                                            &buf_0,
+                                            &ff1_inp_ptr);
         }
-    
-        _attn_output_dropout.Backward(bsz_seq, buf_2, buf_0, _stream);
-    
-        T* attn_output_dropout_buf = _attn_output_dropout.HasDropout() ? buf_2 : buf_0;
-    
-        _attn_out_linear.Backward(bsz_seq,
-                                  attn_output_dropout_buf,
-                                  attn_o_inp_ptr,
-                                  attn_ow_ptr,
-                                  grad_attn_ow_ptr,
-                                  grad_attn_ob_ptr,
-                                  _cublasHandle,
-                                  _stream,
-                                  buf_1);
-    
-        launch_transform_0213<T>(buf_2, buf_1, bsz, _seq_length, _hidden_size, _heads, _stream);
-    
-        if (_attn_prob_dropout.HasDropout()) {
-            if (_attn_dropout_checkpoint)
-                _attn_prob_dropout.Forward(
-                    bsz_heads * _seq_length, ctx_bufB_ptr_recomp, soft_out_ptr, _stream, true);
-    
-            _attn_context.Backward(bsz_heads,
-                                   buf_2,
-                                   v_tf_ptr,
-                                   (_attn_dropout_checkpoint ? ctx_bufB_ptr_recomp : ctx_bufB_ptr),
-                                   _cublasHandle,
-                                   buf_3,
-                                   ff2_buf);
-        } else
-            _attn_context.Backward(
-                bsz_heads, buf_2, v_tf_ptr, soft_out_ptr, _cublasHandle, buf_3, ff2_buf);
-    
-        _attn_prob_dropout.Backward(bsz_heads * _seq_length, ff2_buf, _stream);
-    
-        _softmax.Backward(bsz, ff2_buf, soft_out_ptr, _stream);
-    
-        _attn_scores.Backward(bsz_heads, ff2_buf, k_tf_ptr, q_tf_ptr, _cublasHandle, buf_2, buf_1);
-    
-        launch_transform4d_0213(ff2_buf, buf_1, bsz, _heads, _seq_length, _hidden_size, _stream, 3);
-    
-        if (_pre_or_postLayerNorm)
-            _qkv_linear.Backward(bsz_seq,
-                                 ff2_buf,
-                                 inp_norm_ptr,
-                                 attn_qkvw_ptr,
-                                 grad_attn_qkvw_ptr,
-                                 grad_attn_qkvb_ptr,
-                                 _cublasHandle,
-                                 _stream,
-                                 buf_2);
-        else
-            _qkv_linear.Backward(bsz_seq,
-                                 ff2_buf,
-                                 input_ptr,
-                                 attn_qkvw_ptr,
-                                 grad_attn_qkvw_ptr,
-                                 grad_attn_qkvb_ptr,
-                                 _cublasHandle,
-                                 _stream,
-                                 buf_2);
-    
-        if (_pre_or_postLayerNorm) {
-            if (_layer_norm.UseMean())
-                _layer_norm.BackwardFusedAdd(bsz_seq,
-                                             buf_2,
-                                             buf_0,
-                                             norm_w_ptr,
-                                             grad_norm_w_ptr,
-                                             grad_norm_b_ptr,
-                                             streams,
-                                             grad_input_ptr,
-                                             input_ptr);
-    
-            else
-            
-                _layer_norm.BackwardFusedAdd(bsz_seq,
-                                             buf_2,
-                                             buf_0,
-                                             norm_w_ptr,
-                                             norm_b_ptr,
-                                             grad_norm_w_ptr,
-                                             grad_norm_b_ptr,
-                                             streams,
-                                             grad_input_ptr,
-                                             inp_norm_ptr);
-        } else
-            launch_fused_add2<T>(grad_input_ptr, buf_2, buf_0, bsz, _seq_length, _hidden_size, _stream);
+    } else {
+        if (_attn_layer_norm.UseMean()) {
+            _attn_layer_norm.Backward(bsz_seq,
+                                    &buf_2,
+                                    &attn_nw_ptr,
+                                    &grad_attn_nw_ptr,
+                                    &grad_attn_nb_ptr,
+                                    &SE,
+                                    &buf_0,
+                                    &add_res_ptr);
+        } else {
+            _attn_layer_norm.Backward(bsz_seq,
+                                    &buf_2,
+                                    &attn_nw_ptr,
+                                    &attn_nb_ptr,
+                                    &grad_attn_nw_ptr,
+                                    &grad_attn_nb_ptr,
+                                    &SE,
+                                    &buf_0,
+                                    &ff1_inp_ptr);
+        }       
+    }
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_layer_norm.Backward(): %f\n", sw.GetTimeInSeconds());
 
-    printf("Backward Pass Ends in: %f\n", sw.GetTimeInSeconds());
-      
+    sw.restart();
+    _attn_output_dropout.Backward(bsz_seq, &buf_2, &buf_0, &SE);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_output_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
+    
+    Buffer<float> attn_output_dropout_buf = _attn_output_dropout.HasDropout() ? buf_2 : buf_0;
+
+    sw.restart();   
+    _attn_out_linear.Backward(bsz_seq,
+                            &attn_output_dropout_buf,
+                            &attn_o_inp_ptr,
+                            &attn_ow_ptr,
+                            &grad_attn_ow_ptr,
+                            &grad_attn_ob_ptr,
+                            &SE,
+                            &buf_1);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_out_linear.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();   
+    launch_transform_0213<float>(buf_2.get_device_data(), buf_1.get_device_data(), bsz, sequence_length, hidden_size, nh, SE.getStream(0));
+    sw.stop();
+    printf("Coarse Grained Backward Pass - launch_transform_0213(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    if (_attn_prob_dropout.HasDropout()) {
+        if (_attn_dropout_checkpoint) {
+            _attn_prob_dropout.Forward(bsz_heads * sequence_length, &ctx_bufB_ptr_recomp, &soft_out_ptr, &SE, true);
+        }
+        
+        _attn_context.Backward(bsz_heads,
+                            &buf_2,
+                            &v_tf_ptr,
+                            (_attn_dropout_checkpoint ? &ctx_bufB_ptr_recomp : &ctx_bufB_ptr),
+                            &SE,
+                            &buf_3,
+                            &ff2_buf);
+    } else {
+        _attn_context.Backward(bsz_heads, &buf_2, &v_tf_ptr, &soft_out_ptr, &SE, &buf_3, &ff2_buf);
+    }
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_context.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    _attn_prob_dropout.Backward(bsz_heads * sequence_length, &ff2_buf, &SE);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_prob_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    _softmax.Backward(bsz, &ff2_buf, &soft_out_ptr, &SE);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _softmax.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    _attn_scores.Backward(bsz_heads, &ff2_buf, &k_tf_ptr, &q_tf_ptr, &SE, &buf_2, &buf_1);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _attn_scores.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    launch_transform4d_0213(ff2_buf.get_device_data(), buf_1.get_device_data(), bsz, nh, sequence_length, hidden_size, SE.getStream(0), 3);
+    sw.stop();
+    printf("Coarse Grained Backward Pass - launch_transform4d_0213(): %f\n", sw.GetTimeInSeconds());
+
+    sw.restart();
+    if (_pre_or_postLayerNorm) {
+       _qkv_linear.Backward(bsz_seq,
+                            &ff2_buf,
+                            &inp_norm_ptr,
+                            &attn_qkvw_ptr,
+                            &grad_attn_qkvw_ptr,
+                            &grad_attn_qkvb_ptr,
+                            &SE,
+                            &buf_2); 
+    } else {
+        _qkv_linear.Backward(bsz_seq,
+                            &ff2_buf,
+                            &input_ptr,
+                            &attn_qkvw_ptr,
+                            &grad_attn_qkvw_ptr,
+                            &grad_attn_qkvb_ptr,
+                            &SE,
+                            &buf_2);
+    }
+    sw.stop();
+    printf("Coarse Grained Backward Pass - _qkv_linear.Backward(): %f\n", sw.GetTimeInSeconds());
+
+    if (_pre_or_postLayerNorm) {
+        sw.restart();
+
+        if (_layer_norm.UseMean()) {
+            _layer_norm.BackwardFusedAdd(bsz_seq,
+                                        &buf_2,
+                                        &buf_0,
+                                        &norm_w_ptr,
+                                        &grad_norm_w_ptr,
+                                        &grad_norm_b_ptr,
+                                        &SE,
+                                        &grad_input_ptr,
+                                        &input_ptr);
+        } else {
+            _layer_norm.BackwardFusedAdd(bsz_seq,
+                                        &buf_2,
+                                        &buf_0,
+                                        &norm_w_ptr,
+                                        &norm_b_ptr,
+                                        &grad_norm_w_ptr,
+                                        &grad_norm_b_ptr,
+                                        &SE,
+                                        &grad_input_ptr,
+                                        &inp_norm_ptr);
+        }
+
+        sw.stop();
+        printf("Coarse Grained Backward Pass - _layer_norm.BackwardFusedAdd(): %f\n", sw.GetTimeInSeconds());
+    } else {
+        sw.restart();
+        launch_fused_add2<float>(grad_input_ptr.get_device_data(), buf_2.get_device_data(), buf_0.get_device_data(), bsz, sequence_length, hidden_size, SE.getStream(0));
+        sw.stop();
+        printf("Coarse Grained Backward Pass - launch_fused_add2(): %f\n", sw.GetTimeInSeconds());        
+    }
+
     return 0;
 }
