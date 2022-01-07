@@ -396,6 +396,7 @@ int main(int argc, char* argv[]) {
                                              input_ptr);
     
             else
+            
                 _layer_norm.BackwardFusedAdd(bsz_seq,
                                              buf_2,
                                              buf_0,
