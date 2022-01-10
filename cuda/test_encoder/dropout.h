@@ -1027,6 +1027,8 @@ public:
                             _config.RATIO(),
                             SE->getStream(q_index));
         }
+
+        sw.stop();
     }
 
     void BackwardFineGrained(int bsz,
@@ -1072,6 +1074,8 @@ public:
             
             d_vals_out->copyD2H(SE->compute, offset, nq, i);
         }
+
+        sw.stop();
     }    
 
     bool HasDropout() const { return _config.RATIO() > 0.0; }

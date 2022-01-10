@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cuda.h>
-#include <time.h>
 #include "utils.h"
-#include <stdio.h>
 #include <assert.h>
+#include <curand.h>
 #include <stdexcept>
 #include <cublas_v2.h>
 #include <cuda_fp16.h>
@@ -15,1421 +14,347 @@
 
 namespace cg = cooperative_groups;
 
-__global__ void fused_bias_residual_layer_norm(float* vals,
-                                               const float* residual,
-                                               const float* gamma,
-                                               const float* beta,
-                                               float epsilon,
-                                               bool preLayerNorm,
-                                               bool training,
-                                               float* vars,
-                                               float* means,
-                                               int row_stride)
+inline __device__ float gelu(const float x) // gelu activation function.
 {
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
+    const float sqrt_param = 0.79788456080286535587989211986876f;
+    const float mul_param = 0.044715;
+    return x * 0.5f * (1.0f + tanhf(sqrt_param * (x + mul_param * x * x * x)));
+}
 
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
+inline __device__ float d_gelu(const float x)
+{
+    const float sqrt_param = 0.79788456080286535587989211986876f;
+    const float mul_param = 0.044715;
 
+    float x2mul = x * x * mul_param;
+    float tan_h = tanhf(sqrt_param * (x + x * x2mul));
+    float dg1 = 0.5f * (1.0f + tan_h);
+    float dg2 = x * 0.5f * sqrt_param * (1 - tan_h * tan_h);
+    float dg3 = dg2 * 3 * x2mul;
+    return (dg1 + dg2 + dg3);
+}
+
+__global__ void fused_bias_gelu(const float* input,
+                                const float* bias,
+                                float* vals,
+                                int row_stride,
+                                int iterations)
+{
     int row = blockIdx.x;
     int id = threadIdx.x;
-    int gid = id / WARP_SIZE;
+    int loop_stride = blockDim.x;
 
-    float vals_arr[NORM_REG];
-    __shared__ float shr[MAX_WARP_NUM];
+    const float4* input_cast = reinterpret_cast<const float4*>(input);
+    float4* vals_cast = reinterpret_cast<float4*>(vals);
+    const float4* bias_cast = reinterpret_cast<const float4*>(bias);
 
-    residual += (row * row_stride);
-    vals += (row * row_stride);
-
-    float sum = 0.f;
-    int high_index = iterations * iteration_stride + id;
-#pragma unroll
     for (int i = 0; i < iterations; i++) {
-        vals_arr[i] = residual[i * iteration_stride + id];
-        sum += vals_arr[i];
-    }
-    if (high_index < row_stride) {
-        vals_arr[iterations] = residual[high_index];
-        sum += vals_arr[iterations];
-        iterations++;
-    }
+        if (i * loop_stride + id < row_stride) {
+            float4 data = input_cast[row * row_stride + i * loop_stride + id];
+            float4 bias_data = bias_cast[i * loop_stride + id];
 
-    for (int i = 1; i < 32; i *= 2) { sum += g.shfl_down(sum, i); }
+            data.x += bias_data.x;
+            data.y += bias_data.y;
+            data.z += bias_data.z;
+            data.w += bias_data.w;
 
-    if (g.thread_rank() == 0) shr[gid] = sum;
+            data.x = gelu(data.x);
+            data.y = gelu(data.y);
+            data.z = gelu(data.z);
+            data.w = gelu(data.w);
 
-    b.sync();
-
-    if (g.thread_rank() < (iteration_stride >> 5)) sum = shr[g.thread_rank()];
-
-#if !defined(__STOCHASTIC_MODE__) || __CUDA_ARCH__ < 700
-    b.sync();
-#endif
-
-    for (int i = 1; i < (iteration_stride >> 5); i *= 2) { sum += g.shfl_down(sum, i); }
-
-    sum = g.shfl(sum, 0);
-    float mean = sum / row_stride;
-    if (training)
-        if (g.thread_rank() == 0) means[row] = mean;
-    float variance = 0.f;
-    for (int i = 0; i < iterations; i++) {
-        vals_arr[i] -= mean;
-        variance += vals_arr[i] * vals_arr[i];
-    }
-
-    for (int i = 1; i < 32; i *= 2) { variance += g.shfl_down(variance, i); }
-
-    if (g.thread_rank() == 0) shr[gid] = variance;
-
-    b.sync();
-
-    if (g.thread_rank() < (iteration_stride >> 5)) variance = shr[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    b.sync();
-#endif
-
-    for (int i = 1; i < (iteration_stride >> 5); i *= 2) { variance += g.shfl_down(variance, i); }
-    variance = g.shfl(variance, 0);
-    variance /= row_stride;
-    variance += epsilon;
-    if (training)
-        if (g.thread_rank() == 0) vars[row] = variance;
-
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++) {
-        vals_arr[i] = vals_arr[i] * rsqrtf(variance);
-        vals_arr[i] =
-            vals_arr[i] * gamma[i * iteration_stride + id] + beta[i * iteration_stride + id];
-        vals[i * iteration_stride + id] = vals_arr[i];
-    }
-    if ((high_index) < row_stride) {
-        vals_arr[iterations] = vals_arr[iterations] * rsqrtf(variance);
-        vals_arr[iterations] = vals_arr[iterations] * gamma[high_index] + beta[high_index];
-        vals[high_index] = vals_arr[iterations];
+            vals_cast[row * row_stride + i * loop_stride + id] = data;
+        }
     }
 }
 
-__global__ void fused_bias_residual_layer_norm(__half* vals,
-                                               const __half* residual,
-                                               const __half* gamma,
-                                               const __half* beta,
-                                               float epsilon,
-                                               bool preLayerNorm,
-                                               bool training,
-                                               __half* vars,
-                                               __half* means,
-                                               int row_stride)
+__global__ void fused_bias_gelu(const __half* input,
+                                const __half* bias,
+                                __half* vals,
+                                int row_stride,
+                                int iterations)
+{
+    #if __CUDA_ARCH__ >= 700
+        int row = blockIdx.x;
+        int id = threadIdx.x;
+        int loop_stride = blockDim.x;
+
+        const float2* input_cast = reinterpret_cast<const float2*>(input);
+        float2* vals_cast = reinterpret_cast<float2*>(vals);
+        const float2* bias_cast = reinterpret_cast<const float2*>(bias);
+
+        for (int i = 0; i < iterations; i++) {
+            if (i * loop_stride + id < row_stride) {
+                float2 vals_vec = input_cast[row * row_stride + i * loop_stride + id];
+                float2 bias_vec = bias_cast[i * loop_stride + id];
+
+                __half2* vals_half = reinterpret_cast<__half2*>(&vals_vec);
+                __half2* bias_half = reinterpret_cast<__half2*>(&bias_vec);
+
+                float2 low_data = __half22float2(vals_half[0]);
+                float2 high_data = __half22float2(vals_half[1]);
+
+                float2 low_bias = __half22float2(bias_half[0]);
+                float2 high_bias = __half22float2(bias_half[1]);
+
+                low_data.x += low_bias.x;
+                low_data.y += low_bias.y;
+                high_data.x += high_bias.x;
+                high_data.y += high_bias.y;
+
+                low_data.x = gelu(low_data.x);
+                low_data.y = gelu(low_data.y);
+                high_data.x = gelu(high_data.x);
+                high_data.y = gelu(high_data.y);
+
+                vals_half[0] = __float22half2_rn(low_data);
+                vals_half[1] = __float22half2_rn(high_data);
+
+                vals_cast[row * row_stride + i * loop_stride + id] = vals_vec;
+            }
+        }
+    #endif
+}
+
+template <typename T>
+void launch_bias_gelu(const T* input,
+                      const T* bias,
+                      T* output,
+                      int intermediate_size,
+                      int batch_size,
+                      cudaStream_t stream)
+{
+    int iterations = (intermediate_size + 1023) / 1024;
+    int threads = (intermediate_size - 1) / (iterations * 4) + 1;
+    dim3 block_dims(threads);
+    dim3 grid_dims(batch_size);
+
+    fused_bias_gelu<<<grid_dims, block_dims, 0, stream>>>(
+        input, bias, output, intermediate_size / 4, iterations);
+}
+
+template void launch_bias_gelu<float>(const float*,
+                                    const float*,
+                                    float*,
+                                    int,
+                                    int,
+                                    cudaStream_t);
+
+template void launch_bias_gelu<__half>(const __half*,
+                                    const __half*,
+                                    __half*,
+                                    int,
+                                    int,
+                                    cudaStream_t);
+
+__global__ void d_gelu_func(float* d_output,
+                            const float* gelu_input,
+                            const float* bias,
+                            int row_stride,
+                            int iterations)
+{
+    int row = blockIdx.x;
+    int id = threadIdx.x;
+    int loop_stride = blockDim.x;
+
+    float4* d_output_cast = reinterpret_cast<float4*>(d_output);
+    const float4* gelu_input_cast = reinterpret_cast<const float4*>(gelu_input);
+    const float4* bias_cast = reinterpret_cast<const float4*>(bias);
+
+    for (int i = 0; i < iterations; i++) {
+        if (i * loop_stride + id < row_stride) {
+            float4 output_data = d_output_cast[row * row_stride + i * loop_stride + id];
+            float4 gelu_input_data = gelu_input_cast[row * row_stride + i * loop_stride + id];
+            float4 bias_data = bias_cast[i * loop_stride + id];
+
+            gelu_input_data.x += bias_data.x;
+            gelu_input_data.y += bias_data.y;
+            gelu_input_data.z += bias_data.z;
+            gelu_input_data.w += bias_data.w;
+
+            output_data.x *= d_gelu(gelu_input_data.x);
+            output_data.y *= d_gelu(gelu_input_data.y);
+            output_data.z *= d_gelu(gelu_input_data.z);
+            output_data.w *= d_gelu(gelu_input_data.w);
+
+            d_output_cast[row * row_stride + i * loop_stride + id] = output_data;
+        }
+    }
+}
+
+__global__ void d_gelu_func(__half* d_output,
+                            const __half* gelu_input,
+                            const __half* bias,
+                            int row_stride,
+                            int iterations)
 {
 #if __CUDA_ARCH__ >= 700
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<32> g = cg::tiled_partition<32>(b);
-
     int row = blockIdx.x;
     int id = threadIdx.x;
-    int gid = id >> 5;
+    int loop_stride = blockDim.x;
 
-    float2 vals_f[NORM_REG];
-    __shared__ float shr[MAX_WARP_NUM];
+    float2* d_output_cast = reinterpret_cast<float2*>(d_output);
+    const float2* gelu_input_cast = reinterpret_cast<const float2*>(gelu_input);
+    const float2* bias_cast = reinterpret_cast<const float2*>(bias);
 
-    __half2* vals_cast = reinterpret_cast<__half2*>(vals);
-    const __half2* residual_cast = reinterpret_cast<const __half2*>(residual);
-
-    residual_cast += (row * row_stride);
-    vals_cast += (row * row_stride);
-
-    float sum = 0.f;
-    int high_index = iterations * iteration_stride + id;
 #pragma unroll
     for (int i = 0; i < iterations; i++) {
-        vals_f[i] = __half22float2(residual_cast[i * iteration_stride + id]);
-        sum += vals_f[i].x;
-        sum += vals_f[i].y;
-    }
-    if ((high_index) < row_stride) {
-        vals_f[iterations] = __half22float2(residual_cast[high_index]);
-        sum += vals_f[iterations].x;
-        sum += vals_f[iterations].y;
-        iterations++;
-    }
+        if (i * loop_stride + id < row_stride) {
+            float2 output_data = d_output_cast[row * row_stride + i * loop_stride + id];
+            float2 gelu_input_data = gelu_input_cast[row * row_stride + i * loop_stride + id];
+            float2 bias_vec = bias_cast[i * loop_stride + id];
 
-    for (int i = 1; i < 32; i *= 2) { sum += g.shfl_down(sum, i); }
+            __half2* output_data_half = reinterpret_cast<__half2*>(&output_data);
+            __half2* gelu_input_data_half = reinterpret_cast<__half2*>(&gelu_input_data);
+            __half2* bias_half = reinterpret_cast<__half2*>(&bias_vec);
 
-    if (g.thread_rank() == 0) shr[gid] = sum;
+            float2 output_half_0 = __half22float2(output_data_half[0]);
+            float2 output_half_1 = __half22float2(output_data_half[1]);
 
-    b.sync();
+            float2 gelu_input_half_0 = __half22float2(gelu_input_data_half[0]);
+            float2 gelu_input_half_1 = __half22float2(gelu_input_data_half[1]);
 
-    if (g.thread_rank() < (iteration_stride >> 5)) sum = shr[g.thread_rank()];
+            float2 bias_half_0 = __half22float2(bias_half[0]);
+            float2 bias_half_1 = __half22float2(bias_half[1]);
 
-#ifndef __STOCHASTIC_MODE__
-    b.sync();
-#endif
+            gelu_input_half_0.x += bias_half_0.x;
+            gelu_input_half_0.y += bias_half_0.y;
+            gelu_input_half_1.x += bias_half_1.x;
+            gelu_input_half_1.y += bias_half_1.y;
 
-    for (int i = 1; i < (iteration_stride >> 5); i *= 2) { sum += g.shfl_down(sum, i); }
-    sum = g.shfl(sum, 0);
-    float mean = sum / (row_stride * 2);
+            output_half_0.x *= d_gelu(gelu_input_half_0.x);
+            output_half_0.y *= d_gelu(gelu_input_half_0.y);
+            output_half_1.x *= d_gelu(gelu_input_half_1.x);
+            output_half_1.y *= d_gelu(gelu_input_half_1.y);
 
-    float variance = 0.f;
-    for (int i = 0; i < iterations; i++) {
-        vals_f[i].x -= mean;
-        vals_f[i].y -= mean;
-        variance += vals_f[i].x * vals_f[i].x;
-        variance += vals_f[i].y * vals_f[i].y;
-    }
+            float2 result;
+            __half2* result_half2 = reinterpret_cast<__half2*>(&result);
 
-    for (int i = 1; i < 32; i *= 2) { variance += g.shfl_down(variance, i); }
+            result_half2[0] = __float22half2_rn(output_half_0);
+            result_half2[1] = __float22half2_rn(output_half_1);
 
-    if (g.thread_rank() == 0) shr[gid] = variance;
-
-    b.sync();
-
-    if (g.thread_rank() < (iteration_stride >> 5)) variance = shr[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    b.sync();
-#endif
-
-    for (int i = 1; i < (iteration_stride >> 5); i *= 2) { variance += g.shfl_down(variance, i); }
-    variance = g.shfl(variance, 0);
-    variance /= (row_stride * 2);
-    variance += epsilon;
-
-    __half2 variance_h = __float2half2_rn(variance);
-    const __half2* gamma_cast = reinterpret_cast<const __half2*>(gamma);
-    const __half2* beta_cast = reinterpret_cast<const __half2*>(beta);
-
-    if (training && g.thread_rank() == 0) {
-        vars[row] = __float2half(variance);
-        means[row] = __float2half(mean);
-    }
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++) {
-        __half2 vals_arr = __float22half2_rn(vals_f[i]);
-        vals_arr = vals_arr * h2rsqrt(variance_h);
-        vals_arr =
-            vals_arr * gamma_cast[i * iteration_stride + id] + beta_cast[i * iteration_stride + id];
-        vals_cast[i * iteration_stride + id] = vals_arr;
-    }
-    if ((high_index) < row_stride) {
-        __half2 vals_arr = __float22half2_rn(vals_f[iterations]);
-        vals_arr = vals_arr * h2rsqrt(variance_h);
-        vals_arr = vals_arr * gamma_cast[high_index] + beta_cast[high_index];
-        vals_cast[high_index] = vals_arr;
+            d_output_cast[row * row_stride + i * loop_stride + id] = result;
+        }
     }
 #endif
-}
-
-
-template <typename T>
-void launch_bias_residual_layer_norm(T* vals,
-                                     const T* residual,
-                                     const T* gamma,
-                                     const T* beta,
-                                     float epsilon,
-                                     int batch_size,
-                                     int hidden_dim,
-                                     cudaStream_t* stream,
-                                     bool preLayerNorm,
-                                     bool training,
-                                     T* vars,
-                                     T* means,
-                                     int q_index);
-
-template <>
-void launch_bias_residual_layer_norm<float>(float* vals,
-                                            const float* residual,
-                                            const float* gamma,
-                                            const float* beta,
-                                            float epsilon,
-                                            int batch_size,
-                                            int hidden_dim,
-                                            cudaStream_t* stream,
-                                            bool preLayerNorm,
-                                            bool training,
-                                            float* vars,
-                                            float* means,
-                                            int q_index)
-{
-    int threads = THREADS;
-
-    dim3 grid_dim(batch_size);
-
-    if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 1;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 2;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim(threads);
-
-    #if DEBUG
-        std::cout << "queue_index=" << q_index << "\x1b[41;1mlbrf<<<>>>\x1b[0m";
-        std::cout << "\x1b[31;1m, vals=" << vals; 
-        std::cout << "\x1b[32;1m, residual=" << residual;
-        std::cout << "\x1b[33;1m, gamma=" << gamma;
-        std::cout << "\x1b[34;1m, betta=" << beta << "\x1b[0m;" << std::endl;
-    #endif
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
-        vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim);
-}
-
-template <>
-void launch_bias_residual_layer_norm<__half>(__half* vals,
-                                             const __half* residual,
-                                             const __half* gamma,
-                                             const __half* beta,
-                                             float epsilon,
-                                             int batch_size,
-                                             int hidden_dim,
-                                             cudaStream_t* stream,
-                                             bool preLayerNorm,
-                                             bool training,
-                                             __half* vars,
-                                             __half* means,
-                                             int q_index)
-{
-    int threads = 128;
-
-    dim3 grid_dim(batch_size);
-
-    if (hidden_dim > 8192 && hidden_dim <= 16384)
-        threads <<= 1;
-    else if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 2;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 3;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim(threads);
-    fused_bias_residual_layer_norm<<<grid_dim, block_dim, 0, stream[q_index]>>>(
-        vals, residual, gamma, beta, epsilon, preLayerNorm, training, vars, means, hidden_dim / 2);
 }
 
 template <typename T>
-__global__ void LayerNormBackward1(const T* __restrict__ out_grad,
-                                   const T* __restrict__ vals_hat,
-                                   const T* __restrict__ gamma,
-                                   const T* __restrict__ betta,
-                                   T* __restrict__ gamma_grad,
-                                   T* __restrict__ betta_grad,
-                                   int rows,
-                                   int width,
-                                   bool invertible)
+void launch_d_gelu(T* d_output,
+                   const T* input,
+                   const T* bias,
+                   int intermediate_size,
+                   int batch_size,
+                   cudaStream_t stream)
 {
-    __shared__ float betta_buffer[TILE_DIM][TILE_DIM + 1];
-    __shared__ float gamma_buffer[TILE_DIM][TILE_DIM + 1];
+    int iterations = (intermediate_size + 1023) / 1024;
+    int threads = (intermediate_size - 1) / (iterations * 4) + 1;
+    dim3 block_dims(threads);
+    dim3 grid_dims(batch_size);
 
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<TILE_DIM> g = cg::tiled_partition<TILE_DIM>(b);
-
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    int offset = threadIdx.y * width + idx;
-    int y_stride = width * TILE_DIM;
-
-    float betta_reg = (invertible ? (float)betta[idx] : 0.0f);
-    float gamma_reg = (float)gamma[idx];
-
-    // Loop across matrix height
-    float betta_tmp = 0;
-    float gamma_tmp = 0;
-    for (int r = threadIdx.y; r < rows; r += TILE_DIM) {
-        float grad = (float)out_grad[offset];
-        float val = (invertible ? ((float)vals_hat[offset] - betta_reg) / gamma_reg
-                                : (float)vals_hat[offset]);
-        betta_tmp += grad;
-        gamma_tmp += (val * grad);
-
-        offset += y_stride;
-    }
-
-    betta_buffer[threadIdx.x][threadIdx.y] = betta_tmp;
-    gamma_buffer[threadIdx.x][threadIdx.y] = gamma_tmp;
-
-    __syncthreads();
-
-    // Sum the shared buffer.
-    float s1 = betta_buffer[threadIdx.y][threadIdx.x];
-    float s2 = gamma_buffer[threadIdx.y][threadIdx.x];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < TILE_DIM; i <<= 1) {
-        s1 += g.shfl_down(s1, i);
-        s2 += g.shfl_down(s2, i);
-    }
-
-    if (threadIdx.x == 0) {
-        int pos = blockIdx.x * TILE_DIM + threadIdx.y;
-        betta_grad[pos] = s1;
-        gamma_grad[pos] = s2;
-    }
+    d_gelu_func<<<grid_dims, block_dims, 0, stream>>>(d_output, input, bias, intermediate_size / 4, iterations);
 }
 
-/* Normalize Gamma & Betta gradients
- * Compute gradients using the input to
- * the normalize.
- * Combine transpose with gradients computation.
- */
+template void launch_d_gelu<float>(float*, const float*, const float*, int, int, cudaStream_t);
+template void launch_d_gelu<__half>(__half*, const __half*, const __half*, int, int, cudaStream_t);
 
 template <typename T>
-__global__ void LayerNormBackward1(const T* __restrict__ out_grad,
-                                   const T* __restrict__ X_data,
-                                   const T* __restrict__ vars,
-                                   const T* __restrict__ means,
-                                   T* __restrict__ gamma_grad,
-                                   T* __restrict__ betta_grad,
-                                   int rows,
-                                   int width)
-{
-    __shared__ float betta_buffer[TILE_DIM][TILE_DIM + 1];
-    __shared__ float gamma_buffer[TILE_DIM][TILE_DIM + 1];
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<TILE_DIM> g = cg::tiled_partition<TILE_DIM>(b);
-
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    int offset = threadIdx.y * width + idx;
-    int y_stride = width * TILE_DIM;
-
-    int pos = blockIdx.x * TILE_DIM + threadIdx.y;
-    // Loop across matrix height
-
-    float betta_tmp = 0;
-    float gamma_tmp = 0;
-    for (int r = threadIdx.y; r < rows; r += TILE_DIM) {
-        float grad = (float)out_grad[offset];
-        float val = (float)X_data[offset];
-        val = (val - (float)means[r]) * rsqrtf((float)vars[r]);
-        betta_tmp += grad;
-        gamma_tmp += (val * grad);
-
-        offset += y_stride;
-    }
-
-    betta_buffer[threadIdx.x][threadIdx.y] = betta_tmp;
-    gamma_buffer[threadIdx.x][threadIdx.y] = gamma_tmp;
-
-    __syncthreads();
-
-    // Sum the shared buffer.
-    float s1 = betta_buffer[threadIdx.y][threadIdx.x];
-    float s2 = gamma_buffer[threadIdx.y][threadIdx.x];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < TILE_DIM; i <<= 1) {
-        s1 += g.shfl_down(s1, i);
-        s2 += g.shfl_down(s2, i);
-    }
-
-    if (threadIdx.x == 0) {
-        betta_grad[pos] = s1;
-        gamma_grad[pos] = s2;
-    }
-}
-
-__global__ void LayerNormBackward2(const float* out_grad,
-                                   const float* X_vals,
-                                   const float* gamma,
-                                   const float* vars,
-                                   const float* means,
-                                   float* inp_grad,
-                                   int row_stride)
-{
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
-
-    int row = blockIdx.x;
-    int id = threadIdx.x;
-    int wid = id / WARP_SIZE;
-    int warp_num = (THREADS < row_stride ? THREADS : row_stride) / WARP_SIZE;
-    __shared__ float partialSum[MAX_WARP_NUM];
-
-    out_grad += (row * row_stride);
-    X_vals += (row * row_stride);
-    inp_grad += (row * row_stride);
-
-    float vals_arr[NORM_REG];
-    int high_index = iterations * iteration_stride + id;
-#pragma unroll
-    for (int i = 0; i < iterations; i++) {
-        float gamma_reg = gamma[i * iteration_stride + id];
-        vals_arr[i] = out_grad[i * iteration_stride + id];
-        vals_arr[i] *= gamma_reg;
-    }
-    if ((high_index) < row_stride) {
-        float gamma_reg = gamma[high_index];
-        vals_arr[iterations] = out_grad[high_index];
-        vals_arr[iterations] *= gamma_reg;
-        iterations++;
-    }
-
-    float var_reg = vars[row];
-    float mean_reg = means[row];
-
-    float sum = 0;
-    float xu[NORM_REG];
-    for (int i = 0; i < iterations; i++) {
-        xu[i] = (X_vals[i * iteration_stride + id] - mean_reg);
-        sum += vals_arr[i] * xu[i];
-        vals_arr[i] *= rsqrtf(var_reg);
-    }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    for (int i = 0; i < iterations; i++) {
-        vals_arr[i] += (-sum * xu[i] * rsqrtf(var_reg) / (var_reg));
-    }
-
-    sum = 0;
-    for (int i = 0; i < iterations; i++) { sum += vals_arr[i]; }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++) inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
-    if ((high_index) < row_stride) inp_grad[high_index] = (vals_arr[iterations] - sum);
-}
-
-/* Backward Normalize (Input-Gradient)
- * Using the means and variances from the input
- * This type of backward is invertible!
- * We do the backward using the X_hat (X - u) / sqrt(variance) or the output of Normalization.
- */
-
-__global__ void LayerNormBackward2(const float* out_grad,
-                                   const float* vals_hat,
-                                   const float* gamma,
-                                   const float* betta,
-                                   const float* vars,
-                                   float* inp_grad,
-                                   bool invertible,
-                                   int row_stride)
-{
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
-
-    int row = blockIdx.x;
-    int id = threadIdx.x;
-    int wid = id / WARP_SIZE;
-    int warp_num = (THREADS < row_stride ? THREADS : row_stride) / WARP_SIZE;
-    __shared__ float partialSum[MAX_WARP_NUM];
-
-    out_grad += (row * row_stride);
-    vals_hat += (row * row_stride);
-    inp_grad += (row * row_stride);
-
-    float vals_arr[NORM_REG];
-    float vals_hat_arr[NORM_REG];
-    int high_index = iterations * iteration_stride + id;
-#pragma unroll
-    for (int i = 0; i < iterations; i++) {
-        float gamma_reg = gamma[i * iteration_stride + id];
-        vals_arr[i] = out_grad[i * iteration_stride + id];
-        vals_arr[i] *= gamma_reg;
-        vals_hat_arr[i] =
-            (invertible ? (vals_hat[i * iteration_stride + id] - betta[i * iteration_stride + id]) /
-                              gamma_reg
-                        : vals_hat[i * iteration_stride + id]);
-    }
-    if ((high_index) < row_stride) {
-        float gamma_reg = gamma[high_index];
-        vals_arr[iterations] = out_grad[high_index];
-        vals_arr[iterations] *= gamma_reg;
-        vals_hat_arr[iterations] =
-            (invertible ? (vals_hat[high_index] - betta[high_index]) / gamma_reg
-                        : vals_hat[high_index]);
-        iterations++;
-    }
-
-    float var_reg = vars[row];
-
-    float sum = 0;
-    for (int i = 0; i < iterations; i++) {
-        sum += vals_hat_arr[i] * vals_arr[i] *
-               sqrtf(var_reg);           // dval_hat = gamma * (x - u) * out_grad
-        vals_arr[i] *= rsqrtf(var_reg);  // dvar_inv = gamma * out_grad / sqrt(var)
-    }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    for (int i = 0; i < iterations; i++) { vals_arr[i] += ((-sum * vals_hat_arr[i]) / var_reg); }
-
-    sum = 0;
-    for (int i = 0; i < iterations; i++) { sum += vals_arr[i]; }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++) inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
-    if ((high_index) < row_stride) inp_grad[high_index] = (vals_arr[iterations] - sum);
-}
-
-__global__ void LayerNormBackward2_fused_add(const float* out_grad1,
-                                             const float* out_grad2,
-                                             const float* X_vals,
-                                             const float* gamma,
-                                             const float* vars,
-                                             const float* means,
-                                             float* inp_grad,
-                                             int row_stride)
-{
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
-
-    int row = blockIdx.x;
-    int id = threadIdx.x;
-    int wid = id / WARP_SIZE;
-    int warp_num = (THREADS < row_stride ? THREADS : row_stride) / WARP_SIZE;
-    __shared__ float partialSum[MAX_WARP_NUM];
-
-    float vals_arr[NORM_REG];
-    float vals_hat_arr[NORM_REG];
-
-    out_grad1 += (row * row_stride);
-    out_grad2 += (row * row_stride);
-    X_vals += (row * row_stride);
-    inp_grad += (row * row_stride);
-    int high_index = iterations * iteration_stride + id;
-#pragma unroll
-    for (int i = 0; i < iterations; i++) {
-        float gamma_reg = gamma[i * iteration_stride + id];
-        vals_arr[i] = out_grad1[i * iteration_stride + id];
-        vals_arr[i] *= gamma_reg;
-        vals_hat_arr[i] = X_vals[i * iteration_stride + id];
-    }
-    if ((high_index) < row_stride) {
-        float gamma_reg = gamma[high_index];
-        vals_arr[iterations] = out_grad1[high_index];
-        vals_arr[iterations] *= gamma_reg;
-        vals_hat_arr[iterations] = X_vals[high_index];
-        iterations++;
-    }
-
-    float var_reg = vars[row];
-    float mean_reg = means[row];
-
-    float sum = 0;
-    float xu[NORM_REG];
-    for (int i = 0; i < iterations; i++) {
-        xu[i] = (vals_hat_arr[i] - mean_reg);
-        sum += vals_arr[i] * xu[i];
-        vals_arr[i] *= rsqrtf(var_reg);
-    }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    for (int i = 0; i < iterations; i++) {
-        vals_arr[i] += (-sum * xu[i] * rsqrtf(var_reg) / (var_reg));
-    }
-
-    sum = 0;
-    for (int i = 0; i < iterations; i++) { sum += vals_arr[i]; }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++)
-        inp_grad[i * iteration_stride + id] =
-            (vals_arr[i] - sum) + out_grad2[i * iteration_stride + id];
-    if ((high_index) < row_stride)
-        inp_grad[high_index] = (vals_arr[iterations] - sum) + out_grad2[high_index];
-}
-
-__global__ void LayerNormBackward2_fused_add(const float* out_grad1,
-                                             const float* out_grad2,
-                                             const float* vals_hat,
-                                             const float* gamma,
-                                             const float* betta,
-                                             const float* vars,
-                                             float* inp_grad,
-                                             bool invertible,
-                                             int row_stride)
-{
-    int iteration_stride = blockDim.x;
-    int iterations = row_stride / iteration_stride;
-
-    cg::thread_block b = cg::this_thread_block();
-    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
-
-    int row = blockIdx.x;
-    int id = threadIdx.x;
-    int wid = id / WARP_SIZE;
-    int warp_num = (THREADS < row_stride ? THREADS : row_stride) / WARP_SIZE;
-    __shared__ float partialSum[MAX_WARP_NUM];
-
-    out_grad1 += (row * row_stride);
-    out_grad2 += (row * row_stride);
-    vals_hat += (row * row_stride);
-    inp_grad += (row * row_stride);
-
-    float vals_arr[NORM_REG];
-    float vals_hat_arr[NORM_REG];
-    int high_index = iterations * iteration_stride + id;
-#pragma unroll
-    for (int i = 0; i < iterations; i++) {
-        float gamma_reg = gamma[i * iteration_stride + id];
-        vals_arr[i] = out_grad1[i * iteration_stride + id];
-        vals_arr[i] *= gamma_reg;
-        vals_hat_arr[i] =
-            (invertible ? (vals_hat[i * iteration_stride + id] - betta[i * iteration_stride + id]) /
-                              gamma_reg
-                        : vals_hat[i * iteration_stride + id]);
-    }
-    if ((high_index) < row_stride) {
-        float gamma_reg = gamma[high_index];
-        vals_arr[iterations] = out_grad1[high_index];
-        vals_arr[iterations] *= gamma_reg;
-        vals_hat_arr[iterations] =
-            (invertible ? (vals_hat[high_index] - betta[high_index]) / gamma_reg
-                        : vals_hat[high_index]);
-        iterations++;
-    }
-
-    float var_reg = vars[row];
-
-    float sum = 0;
-    for (int i = 0; i < iterations; i++) {
-        sum += vals_hat_arr[i] * vals_arr[i] * sqrtf(var_reg);
-        vals_arr[i] *= rsqrtf(var_reg);
-    }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    for (int i = 0; i < iterations; i++) { vals_arr[i] += ((-sum * vals_hat_arr[i]) / var_reg); }
-
-    sum = 0;
-    for (int i = 0; i < iterations; i++) { sum += vals_arr[i]; }
-
-    for (int i = 1; i < WARP_SIZE; i *= 2) { sum += g.shfl_down(sum, i); }
-
-    if (g.thread_rank() == 0) partialSum[wid] = sum;
-
-    __syncthreads();
-
-    if (g.thread_rank() < warp_num) sum = partialSum[g.thread_rank()];
-
-#ifndef __STOCHASTIC_MODE__
-    __syncthreads();
-#endif
-
-    for (int i = 1; i < warp_num; i *= 2) sum += g.shfl_down(sum, i);
-    sum = g.shfl(sum, 0);
-    sum /= row_stride;
-
-    iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++)
-        inp_grad[i * iteration_stride + id] =
-            (vals_arr[i] - sum) + out_grad2[i * iteration_stride + id];
-    if ((high_index) < row_stride)
-        inp_grad[high_index] = (vals_arr[iterations] - sum) + out_grad2[high_index];
-}
-
-template <typename T>
-void launch_layerNorm_backward(const T* out_grad,
-                                      const T* X_data,
-                                      const T* vars,
-                                      const T* means,
-                                      const T* gamma,
-                                      T* gamma_grad,
-                                      T* betta_grad,
-                                      T* inp_grad,
-                                      int batch,
-                                      int hidden_dim,
-                                      cudaStream_t stream[2]);
-
-template <>
-void launch_layerNorm_backward<float>(const float* out_grad,
-                                      const float* X_data,
-                                      const float* vars,
-                                      const float* means,
-                                      const float* gamma,
-                                      float* gamma_grad,
-                                      float* betta_grad,
-                                      float* inp_grad,
-                                      int batch,
-                                      int hidden_dim,
-                                      cudaStream_t stream[2])
-{
-    int threads = THREADS;
-
-    dim3 grid_dim(hidden_dim / TILE_DIM);
-    dim3 block_dim(TILE_DIM, TILE_DIM);
-
-    LayerNormBackward1<float><<<grid_dim, block_dim, 0, stream[0]>>>(
-        out_grad, X_data, vars, means, gamma_grad, betta_grad, batch, hidden_dim);
-
-    dim3 grid_dim2(batch);
-
-    if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 1;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 2;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim2(threads);
-    LayerNormBackward2<<<grid_dim2, block_dim2, 0, stream[1]>>>(
-        out_grad, X_data, gamma, vars, means, inp_grad, hidden_dim);
-}
-
-template <typename T>
-void launch_layerNorm_backward(const T* out_grad,
-                                      const T* vals_hat,
-                                      const T* vars,
-                                      const T* gamma,
-                                      T* gamma_grad,
-                                      T* betta_grad,
-                                      T* inp_grad,
-                                      int batch,
-                                      int hidden_dim,
-                                      cudaStream_t stream[2],
-                                      bool invertible,
-                                      const T* betta);
-
-template <>
-void launch_layerNorm_backward<float>(const float* out_grad,
-                                      const float* vals_hat,
-                                      const float* vars,
-                                      const float* gamma,
-                                      float* gamma_grad,
-                                      float* betta_grad,
-                                      float* inp_grad,
-                                      int batch,
-                                      int hidden_dim,
-                                      cudaStream_t stream[2],
-                                      bool invertible,
-                                      const float* betta)
-{
-    int threads = THREADS;
-
-    dim3 grid_dim(hidden_dim / TILE_DIM);
-    dim3 block_dim(TILE_DIM, TILE_DIM);
-
-    LayerNormBackward1<float><<<grid_dim, block_dim, 0, stream[0]>>>(
-        out_grad, vals_hat, gamma, betta, gamma_grad, betta_grad, batch, hidden_dim, invertible);
-
-    dim3 grid_dim2(batch);
-
-    if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 1;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 2;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim2(threads);
-
-    LayerNormBackward2<<<grid_dim2, block_dim2, 0, stream[1]>>>(
-        out_grad, vals_hat, gamma, betta, vars, inp_grad, invertible, hidden_dim);
-}
-
-template <typename T>
-void launch_layerNorm_backward_fused_add(const T* out_grad1,
-                                                const T* out_grad2,
-                                                const T* X_data,
-                                                const T* vars,
-                                                const T* means,
-                                                const T* gamma,
-                                                T* gamma_grad,
-                                                T* betta_grad,
-                                                T* inp_grad,
-                                                int batch,
-                                                int hidden_dim,
-                                                cudaStream_t stream[2]);
-
-template <>
-void launch_layerNorm_backward_fused_add<float>(const float* out_grad1,
-                                                const float* out_grad2,
-                                                const float* X_data,
-                                                const float* vars,
-                                                const float* means,
-                                                const float* gamma,
-                                                float* gamma_grad,
-                                                float* betta_grad,
-                                                float* inp_grad,
-                                                int batch,
-                                                int hidden_dim,
-                                                cudaStream_t stream[2])
-{
-    int threads = THREADS;
-
-    dim3 grid_dim(hidden_dim / TILE_DIM);
-    dim3 block_dim(TILE_DIM, TILE_DIM);
-
-    LayerNormBackward1<float><<<grid_dim, block_dim, 0, stream[0]>>>(
-        out_grad1, X_data, vars, means, gamma_grad, betta_grad, batch, hidden_dim);
-
-    dim3 grid_dim2(batch);
-
-    if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 1;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 2;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim2(threads);
-    LayerNormBackward2_fused_add<<<grid_dim2, block_dim2, 0, stream[1]>>>(
-        out_grad1, out_grad2, X_data, gamma, vars, means, inp_grad, hidden_dim);
-}
-
-template <typename T>
-void launch_layerNorm_backward_fused_add(const T* out_grad1,
-                                                const T* out_grad2,
-                                                const T* vals_hat,
-                                                const T* vars,
-                                                const T* gamma,
-                                                T* gamma_grad,
-                                                T* betta_grad,
-                                                T* inp_grad,
-                                                int batch,
-                                                int hidden_dim,
-                                                cudaStream_t stream[2],
-                                                bool invertible,
-                                                const T* betta);
-
-template <>
-void launch_layerNorm_backward_fused_add<float>(const float* out_grad1,
-                                                const float* out_grad2,
-                                                const float* vals_hat,
-                                                const float* vars,
-                                                const float* gamma,
-                                                float* gamma_grad,
-                                                float* betta_grad,
-                                                float* inp_grad,
-                                                int batch,
-                                                int hidden_dim,
-                                                cudaStream_t stream[2],
-                                                bool invertible,
-                                                const float* betta)
-{
-    int threads = THREADS;
-
-    dim3 grid_dim(hidden_dim / TILE_DIM);
-    dim3 block_dim(TILE_DIM, TILE_DIM);
-    LayerNormBackward1<float><<<grid_dim, block_dim, 0, stream[0]>>>(
-        out_grad1, vals_hat, gamma, betta, gamma_grad, betta_grad, batch, hidden_dim, invertible);
-
-    dim3 grid_dim2(batch);
-
-    if (hidden_dim > 16384 && hidden_dim <= 32768)
-        threads <<= 1;
-    else if (hidden_dim > 32768 && hidden_dim <= 65536)
-        threads <<= 2;
-    else if (hidden_dim > 65536)
-        throw std::runtime_error("Unsupport hidden_dim.");
-
-    dim3 block_dim2(threads);
-    LayerNormBackward2_fused_add<<<grid_dim2, block_dim2, 0, stream[1]>>>(
-        out_grad1, out_grad2, vals_hat, gamma, betta, vars, inp_grad, invertible, hidden_dim);
-}
-
-template <typename T>
-class Normalize {
+class Gelu {
 public:
     struct Config {
-        uint32_t batchSize;
-        uint32_t seqLength;
-        uint32_t hiddenDim;
-        float epsilon;
-        bool training;
-        bool useMean;
-        Config(uint32_t batch, uint32_t seq, uint32_t h, bool training, bool useMean = true)
-            : batchSize(batch),
-              seqLength(seq),
-              hiddenDim(h),
-              epsilon(1e-12),
-              training(training),
-              useMean(useMean)
-        {
-        }
+        uint32_t intermediate_size;
+        Config(uint32_t inter_size) : intermediate_size(inter_size) {}
     };
 
-    Normalize(Config config)
-        : config_(config), vars(nullptr), means(nullptr), vals_hat(nullptr)
-    {
-    }
+    Gelu(const Config& config) : _config(config) {}
 
-    ~Normalize() {}
-    void ForwardCheckpoint(int bsz,  // batch * seq
-                           Buffer<T>* vals,
-                           Buffer<T>* residual,
-                           Buffer<T>* gamma,
-                           Buffer<T>* betta,
-                           ScheduleEngine* SE,
-                           bool sync = false,
-                           bool preLayerNorm = false)
+    virtual ~Gelu() {}
+
+    void ForwardWithBiasAdd(int bsz, 
+                            Buffer <T>* input_buf,
+                            Buffer <T>* bias,
+                            Buffer <T>* output,
+                            ScheduleEngine* SE,
+                            int q_index=0)
     {
+
         #if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif 
-        vals->copyH2D(SE->compute);
-        residual->copyH2D(SE->compute);
-        gamma->copyH2D(SE->compute);
-        betta->copyH2D(SE->compute);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-        launch_bias_residual_layer_norm(vals->get_device_data(),
-                                        residual->get_device_data(),
-                                        gamma->get_device_data(),
-                                        betta->get_device_data(),
-                                        config_.epsilon,
-                                        bsz,
-                                        config_.hiddenDim,
-                                        SE->compute,
-                                        preLayerNorm,
-                                        config_.training,
-                                        vars->get_device_data(),
-                                        means->get_device_data(),
-                                        0);
+            Stopwatch sw;
+            sw.restart();
+        #endif
 
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-        vals->copyD2H(SE->compute);
-        residual->copyD2H(SE->compute);
-        // gamma->copyD2H(SE->compute);
-        // betta->copyD2H(SE->compute);
-        if ( sync )
-            CHECK(cudaThreadSynchronize());
-#if EVENT_PROFILE
-        sw.stop();
-        printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-
+        launch_bias_gelu<T>(input_buf->get_device_data(), 
+                            bias->get_device_data(), 
+                            output->get_device_data(), 
+                            _config.intermediate_size, 
+                            bsz, 
+                            SE->getStream(q_index));
+    
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
     }
 
-    void ForwardCheckpointPartition(int bsz,  // batch * seq
-        int nq, // number of queues
-        Buffer<T>* vals,
-        Buffer<T>* residual,
-        Buffer<T>* gamma,
-        Buffer<T>* betta,
-        ScheduleEngine* SE,
-        bool sync = false,
-        bool preLayerNorm = false)
+    void Backward(int bsz,
+                Buffer <T>* d_output,
+                Buffer <T>* input_buf,
+                Buffer <T>* bias,
+                ScheduleEngine* SE)
     {
-        uint32_t batch_size = config_.batchSize; 
-        uint32_t sequence_length = config_.seqLength; 
-        uint32_t hidden_size = config_.hiddenDim;
-        std::cout << "\x1b[32;1mForwardCheckpointPartition\x1b[0m\n";
-        int offset = 0;
-        int partition_size = (batch_size / nq);
-        std::cout << "\x1b[31;1mpartition_size=" << partition_size << "\x1b[0m" << std::endl;
-        gamma->copyH2D(SE->compute);
-        betta->copyH2D(SE->compute);    
-        std::cout << "creating queues" << std::endl;
+        launch_d_gelu<T>(d_output->get_device_data(),
+                        input_buf->get_device_data(),
+                        bias->get_device_data(),
+                        _config.intermediate_size,
+                        bsz,
+                        SE->getStream(0));
+    }
 
-        Stopwatch sw;
-        sw.start();
-        // std::cout << "start profiling" << std::endl;
-        for (int i = 0; i<nq; i++)
+    void BackwardFineGrained(int bsz,
+                int nq,
+                Buffer <T>* d_output,
+                Buffer <T>* input_buf,
+                Buffer <T>* bias,
+                ScheduleEngine* SE)
+    {
+        input_buf->copyH2D(SE->compute);
+        bias->copyH2D(SE->compute);
+
+        int offset = 0;
+        int offset_size = bsz * _config.intermediate_size / nq;
+
+        #if DEBUG
+            std::cout << "offset_size=" << offset_size << std::endl;
+            std::cout << "input volume=" << bsz*config_.inputSize << std::endl;
+            std::cout << "output volume=" << 3*bsz*config_.inputSize << std::endl;
+        #endif
+
+        for (int i = 0; i < nq; i++)
         {
-            offset = i * partition_size * sequence_length * hidden_size; 
-            
-            vals->copyH2D(SE->compute, offset, nq, i);
-            residual->copyH2D(SE->compute, offset, nq, i);
-            #if DEBUG
-                std::cout << "queue_index=" << i << ", offset=" << offset; 
-                std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
-                std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
-                std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
-                std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
-            #endif
-            cublasSetStream(SE->handle, SE->compute[i]);
-            launch_bias_residual_layer_norm(vals->get_device_data(offset),
-                                residual->get_device_data(offset),
-                                gamma->get_device_data(),
-                                betta->get_device_data(),
-                                config_.epsilon,
-                                bsz,
-                                config_.hiddenDim,
-                                SE->compute,
-                                preLayerNorm,
-                                config_.training,
-                                vars->get_device_data(),
-                                means->get_device_data(),
-                                i);
-            vals->copyD2H(SE->compute, offset, nq, i);
-            // residual->copyD2H(SE->compute, offset, nq, i);
-        }
-        // sw.stop();
-        // std::cout << "end profiling, time=" << sw.GetTimeInSeconds() << std::endl;
-        if ( sync )
-            CHECK(cudaThreadSynchronize());
-    }
-
-    void Backward(int bsz,
-                  Buffer<T>* out_grad,
-                  Buffer<T>* gamma,
-                  Buffer<T>* gamma_grad,
-                  Buffer<T>* betta_grad,
-                  ScheduleEngine* SE,
-                  Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_in = nullptr)
-    {
-        launch_layerNorm_backward(out_grad->get_device_data(),
-                                  norm_in->get_device_data(),
-                                  vars->get_device_data(),
-                                  means->get_device_data(),
-                                  gamma->get_device_data(),
-                                  gamma_grad->get_device_data(),
-                                  betta_grad->get_device_data(),
-                                  inp_grad_out->get_device_data(),
-                                  bsz,
-                                  config_.hiddenDim,
-                                  SE->compute);
-    }
-
-    void Backward(int bsz,
-                  Buffer<T>* out_grad,
-                  Buffer<T>* gamma,
-                  Buffer<T>* betta,
-                  Buffer<T>* gamma_grad,
-                  Buffer<T>* betta_grad,
-                  ScheduleEngine* SE,
-                  Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_out)
-    {
-        launch_layerNorm_backward(out_grad->get_device_data(),
-                                  norm_out->get_device_data(),
-                                  vars->get_device_data(),
-                                  gamma->get_device_data(),
-                                  gamma_grad->get_device_data(),
-                                  betta_grad->get_device_data(),
-                                  inp_grad_out->get_device_data(),
-                                  bsz,
-                                  config_.hiddenDim,
-                                  SE->compute,
-                                  !config_.useMean,
-                                  betta->get_device_data());
-    }    
-
-    void BackwardFusedAdd(int bsz,
-                          Buffer<T>* out_grad1,
-                          Buffer<T>* out_grad2,
-                          Buffer<T>* gamma,
-                          Buffer<T>* gamma_grad,
-                          Buffer<T>* betta_grad,
-                          ScheduleEngine* SE,
-                          Buffer<T>* inp_grad_out,
-                          Buffer<T>* norm_in = nullptr)
-    {
-        launch_layerNorm_backward_fused_add(out_grad1->get_device_data(),
-                                            out_grad2->get_device_data(),
-                                            norm_in->get_device_data(),
-                                            vars->get_device_data(),
-                                            means->get_device_data(),
-                                            gamma->get_device_data(),
-                                            gamma_grad->get_device_data(),
-                                            betta_grad->get_device_data(),
-                                            inp_grad_out->get_device_data(),
-                                            bsz,
-                                            config_.hiddenDim,
-                                            SE->compute);
-    }
-
-    void BackwardFusedAdd(int bsz,
-                          Buffer<T>* out_grad1,
-                          Buffer<T>* out_grad2,
-                          Buffer<T>* gamma,
-                          Buffer<T>* betta,
-                          Buffer<T>* gamma_grad,
-                          Buffer<T>* betta_grad,
-                          ScheduleEngine* SE,
-                          Buffer<T>* inp_grad_out,
-                          Buffer<T>* norm_out)
-    {
-        launch_layerNorm_backward_fused_add(out_grad1->get_device_data(),
-                                            out_grad2->get_device_data(),
-                                            norm_out->get_device_data(),
-                                            vars->get_device_data(),
-                                            gamma->get_device_data(),
-                                            gamma_grad->get_device_data(),
-                                            betta_grad->get_device_data(),
-                                            inp_grad_out->get_device_data(),
-                                            bsz,
-                                            config_.hiddenDim,
-                                            SE->compute,
-                                            !config_.useMean,
-                                            betta->get_device_data());
-    }
-
-    void BackwardFineGrained(int bsz,
-                  int nq, // number of queues
-                  Buffer<T>* out_grad,
-                  Buffer<T>* gamma,
-                  Buffer<T>* gamma_grad,
-                  Buffer<T>* betta_grad,
-                  ScheduleEngine* SE,
-                  Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_in = nullptr)
-    {
-        uint32_t batch_size = config_.batchSize; 
-        uint32_t sequence_length = config_.seqLength; 
-        uint32_t hidden_size = config_.hiddenDim;
-        std::cout << "BackwardFineGrained\n";
-        int offset = 0;
-        int partition_size = (batch_size / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
-        
-        gamma->copyH2D(SE->compute);
-        betta_grad->copyH2D(SE->compute);   
-        std::cout << "creating queues" << std::endl;
-
-        Stopwatch sw;
-        sw.start();
-
-        for (int i = 0; i<nq; i++) {
-            offset = i * partition_size * sequence_length * hidden_size; 
-            
-            out_grad->copyH2D(SE->compute, offset, nq, i);
-            gamma_grad->copyH2D(SE->compute, offset, nq, i);
-            inp_grad_out->copyH2D(SE->compute, offset, nq, i);
-            norm_in->copyH2D(SE->compute, offset, nq, i);
+            offset = i * offset_size;   
+            d_output->copyH2D(SE->compute, offset, nq, i);
+            // out->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
-                std::cout << "queue_index=" << i << ", offset=" << offset; 
-                std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
-                std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
-                std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
-                std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
+                std::cout << "\x1b[31;1mqueue index=" << i << "\x1b[0m" << std::endl;
+                std::cout << "input offset=" << offset << std::endl;
+                std::cout << "output offset=" << 3*offset << std::endl;
             #endif
-            
-            cublasSetStream(SE->handle, SE->compute[i]);
-            
-            launch_layerNorm_backward(out_grad->get_device_data(offset),
-                                  norm_in->get_device_data(offset),
-                                  vars->get_device_data(),
-                                  means->get_device_data(),
-                                  gamma->get_device_data(),
-                                  gamma_grad->get_device_data(offset),
-                                  betta_grad->get_device_data(),
-                                  inp_grad_out->get_device_data(offset),
-                                  bsz,
-                                  config_.hiddenDim,
-                                  SE->compute);
 
-            out_grad->copyD2H(SE->compute, offset, nq, i);            
+            cublasSetStream(SE->handle, SE->compute[i]);        
+            
+            launch_d_gelu<T>(d_output->get_device_data(offset),
+                        input_buf->get_device_data(),
+                        bias->get_device_data(),
+                        _config.intermediate_size,
+                        bsz,
+                        SE->getStream(0));
+            
+            d_output->copyD2H(SE->compute, offset, nq, i);
         }
     }
 
-    void BackwardFineGrained(int bsz,
-                  int nq, // number of queues
-                  Buffer<T>* out_grad,
-                  Buffer<T>* gamma,
-                  Buffer<T>* betta,
-                  Buffer<T>* gamma_grad,
-                  Buffer<T>* betta_grad,
-                  ScheduleEngine* SE,
-                  Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_out)
-    {
-        uint32_t batch_size = config_.batchSize; 
-        uint32_t sequence_length = config_.seqLength; 
-        uint32_t hidden_size = config_.hiddenDim;
-        std::cout << "BackwardFineGrained\n";
-        int offset = 0;
-        int partition_size = (batch_size / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
-        
-        gamma->copyH2D(SE->compute);
-        betta->copyH2D(SE->compute);   
-        std::cout << "creating queues" << std::endl;
-
-        Stopwatch sw;
-        sw.start();
-
-        for (int i = 0; i<nq; i++) {
-            offset = i * partition_size * sequence_length * hidden_size; 
-            
-            out_grad->copyH2D(SE->compute, offset, nq, i);
-            gamma_grad->copyH2D(SE->compute, offset, nq, i);
-            betta_grad->copyH2D(SE->compute, offset, nq, i);
-            inp_grad_out->copyH2D(SE->compute, offset, nq, i);
-            norm_out->copyH2D(SE->compute, offset, nq, i);
-
-            #if DEBUG
-                std::cout << "queue_index=" << i << ", offset=" << offset; 
-                std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
-                std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
-                std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
-                std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
-            #endif
-            
-            cublasSetStream(SE->handle, SE->compute[i]);
-
-            launch_layerNorm_backward(out_grad->get_device_data(offset),
-                                  norm_out->get_device_data(offset),
-                                  vars->get_device_data(),
-                                  gamma->get_device_data(),
-                                  gamma_grad->get_device_data(offset),
-                                  betta_grad->get_device_data(offset),
-                                  inp_grad_out->get_device_data(offset),
-                                  bsz,
-                                  config_.hiddenDim,
-                                  SE->compute,
-                                  !config_.useMean,
-                                  betta->get_device_data());
-                                  
-            out_grad->copyD2H(SE->compute, offset, nq, i);        
-        }
-    }        
-
-    inline bool UseMean() const { return config_.useMean; }
-
-    inline void SetVar(T* variance)
-    {
-        if (!variance) { throw std::runtime_error("Normalize variance is null."); }
-        vars = variance;
-    }
-
-    inline void SetMean(T* mean)
-    {
-        if (!mean) { throw std::runtime_error("Normalize mean is null."); }
-        means = mean;
-    }
-  
-    void SetMeansAndVariance(Buffer<float>*mean, Buffer<float>*variance)
-    {
-      means = mean;
-      vars = variance;
-    }
-
-private:
-    Config config_;
-    Buffer<T>* vars;
-    Buffer<T>* means;
-    Buffer<T>* vals_hat;
-
+    private:
+        Config _config;
 };

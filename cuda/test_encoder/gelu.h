@@ -330,7 +330,6 @@ public:
             std::cout << "output volume=" << 3*bsz*config_.inputSize << std::endl;
         #endif
 
-    
         for (int i = 0; i < nq; i++)
         {
             offset = i * offset_size;   
