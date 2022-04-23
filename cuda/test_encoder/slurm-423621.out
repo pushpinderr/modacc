@@ -1,0 +1,37 @@
+==========================================
+SLURM_CLUSTER_NAME = param-shakti
+SLURM_JOB_ACCOUNT = soumyajitcs
+SLURM_JOB_ID = 423621
+SLURM_JOB_NAME = test_job
+SLURM_JOB_NODELIST = gpu007
+SLURM_JOB_USER = 20cs91q01
+SLURM_JOB_UID = 6334
+SLURM_JOB_PARTITION = gpu
+SLURM_TASK_PID = 26660
+SLURM_SUBMIT_DIR = /scratch/20cs91q01/WorkSpace/modacc/cuda/test_encoder
+SLURM_CPUS_ON_NODE = 1
+SLURM_NTASKS = 1
+SLURM_TASK_PID = 26660
+==========================================
+/var/share/slurm/slurm/d/job423621/slurm_script: line 15: cd: modacc/cuda/test_encoder/: No such file or directory
+Sun Jun 20 18:43:58 2021       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 465.19.01    Driver Version: 465.19.01    CUDA Version: 11.3     |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  NVIDIA Tesla V1...  Off  | 00000000:5E:00.0 Off |                    0 |
+| N/A   33C    P0    41W / 250W |   3760MiB / 16160MiB |      0%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+                                                                               
++-----------------------------------------------------------------------------+
+| Processes:                                                                  |
+|  GPU   GI   CI        PID   Type   Process name                  GPU Memory |
+|        ID   ID                                                   Usage      |
+|=============================================================================|
+|    0   N/A  N/A     26354      C   .../envs/vqg_dave/bin/python     2597MiB |
+|    0   N/A  N/A     26585      C   .../envs/vqg_dave/bin/python     1159MiB |
++-----------------------------------------------------------------------------+

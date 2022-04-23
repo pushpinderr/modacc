@@ -441,6 +441,99 @@ void launch_attn_softmax<__half>(__half* vals,
     }
 }
 
+template <typename T, int ITERATIONS>
+__global__ void softmax_backward_kernel_v2(T* grad /* input & output*/,
+                                           const T* output,
+                                           int softmax_length)
+{
+    int batch_idx = blockIdx.x * blockDim.y + threadIdx.y;
+    int offset = batch_idx * softmax_length + threadIdx.x;
+
+    grad += offset;
+    output += offset;
+
+    T grad_reg[ITERATIONS];
+    T output_reg[ITERATIONS];
+    float sum = 0.0;
+
+#pragma unroll
+    for (int i = 0; i < ITERATIONS; ++i) {
+        int curr_idx = threadIdx.x + i * WARP_SIZE;
+        if (curr_idx < softmax_length) {
+            grad_reg[i] = grad[i * WARP_SIZE];
+            output_reg[i] = output[i * WARP_SIZE];
+            sum += (float)grad_reg[i] * (float)output_reg[i];
+        }
+    }
+
+    cg::thread_block b = cg::this_thread_block();
+    cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
+
+    for (int i = 1; i < WARP_SIZE; i <<= 1) sum += g.shfl_xor(sum, i);
+
+#pragma unroll
+    for (int i = 0; i < ITERATIONS; ++i) {
+        int curr_idx = threadIdx.x + i * WARP_SIZE;
+        if (curr_idx < softmax_length)
+            grad[i * WARP_SIZE] = (float)output_reg[i] * ((float)grad_reg[i] - sum);
+    }
+}
+
+template <typename T>
+void launch_attn_softmax_backward_v2(T* out_grad,
+                                     const T* soft_inp,
+                                     int batch_size,
+                                     int heads,
+                                     int seq_length,
+                                     cudaStream_t stream);
+
+template <typename T>
+void launch_attn_softmax_backward_v2(T* out_grad,
+                                     const T* soft_inp,
+                                     int batch_size,
+                                     int heads,
+                                     int seq_length,
+                                     cudaStream_t stream)
+{
+    const int warps_per_block = 4;
+    dim3 grid_dim(batch_size * heads * seq_length / warps_per_block);
+    dim3 block_dim(WARP_SIZE, warps_per_block);
+
+    if (seq_length <= 32)
+        softmax_backward_kernel_v2<T, 1>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 64)
+        softmax_backward_kernel_v2<T, 2>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 128)
+        softmax_backward_kernel_v2<T, 4>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 256)
+        softmax_backward_kernel_v2<T, 8>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 384)
+        softmax_backward_kernel_v2<T, 12>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 512)
+        softmax_backward_kernel_v2<T, 16>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 768)
+        softmax_backward_kernel_v2<T, 24>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 1024)
+        softmax_backward_kernel_v2<T, 32>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else if (seq_length <= 2048)
+        softmax_backward_kernel_v2<T, 64>
+            <<<grid_dim, block_dim, 0, stream>>>(out_grad, soft_inp, seq_length);
+    else
+        throw std::runtime_error(
+            std::string("Special sequence length found in softmax backward, seq_length: ") +
+            std::to_string(seq_length));
+}
+
+
+
 template <typename T>
 class Softmax {
 public:
@@ -468,36 +561,58 @@ public:
 
     void ForwardCheckpoint(int bsz, Buffer <T>* vals, Buffer <T>* attn_mask, ScheduleEngine* SE, int q_index=0)
     {
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif
-	vals->copyH2D(SE->compute);
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+	
+        vals->copyH2D(SE->compute);
         attn_mask->copyH2D(SE->compute);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+        
         launch_attn_softmax<T>(vals->get_device_data(), 
                                attn_mask->get_device_data(), 
                                bsz, 
                                config_.heads, 
                                config_.seq_length, 
                                SE->getStream(q_index));
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-        vals->copyD2H(SE->compute);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
 
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+        
+        vals->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
     }
+
+    void Backward(int bsz,
+                Buffer<T>* out_grad,
+                Buffer<T>* soft_out,
+                ScheduleEngine * SE)
+    {
+        launch_attn_softmax_backward_v2<T>(out_grad->get_device_data(),
+                                        soft_out->get_device_data(),
+                                        bsz,
+                                        config_.heads,
+                                        config_.seq_length,
+                                        SE->getStream(0));
+    }
+
+
+
+
     inline size_t GetProbDepth() const { return config_.prob_depth; }
 
     inline size_t GetBatchSize() const { return config_.batchSize; }
@@ -508,6 +623,6 @@ public:
 
     inline void SetSeqLength(size_t seq_len) { config_.seq_length = seq_len; }
 
-private:
-    Config config_;
+    private:
+        Config config_;
 };

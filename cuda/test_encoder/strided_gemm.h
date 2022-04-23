@@ -15,7 +15,6 @@
 
 namespace cg = cooperative_groups;
 
-
 template <typename T>
 class StridedBatchGemm {
 public:
@@ -97,6 +96,69 @@ public:
         sw.restart();
 #endif    
 }
+
+    void Backward(int bsz,
+                  Buffer<T>* d_output,
+                  Buffer<T>* _buffer_a,
+                  Buffer<T>* _buffer_b,
+                  ScheduleEngine* SE,
+                  Buffer<T>* inpGradA = nullptr,
+                  Buffer<T>* inpGradB = nullptr)
+    {
+        int mb = (_config.op_A == CUBLAS_OP_T ? _config.k : _config.m);
+        int kb = (_config.op_A == CUBLAS_OP_T ? _config.m : _config.k);
+
+        int stride_a = mb * _config.n;
+        int stride_b = _config.n * kb;
+        int stride_c = _config.m * _config.k;
+
+        // B need to transpose.
+        cublasOperation_t op_b = (_config.op_B == CUBLAS_OP_T ? CUBLAS_OP_N : CUBLAS_OP_T);
+
+        // Calculate d_A.
+        cublas_strided_batched_gemm(SE->handle,
+                                    mb,
+                                    kb,
+                                    _config.n,
+                                    &_config.alpha,
+                                    &_config.beta,
+                                    (_config.op_A == CUBLAS_OP_T ? _buffer_b->get_device_data() : d_output->get_device_data()),
+                                    (_config.op_A == CUBLAS_OP_T ? d_output->get_device_data() : _buffer_b->get_device_data()),
+                                    inpGradA->get_device_data(),
+                                    CUBLAS_OP_N,
+                                    op_b,
+                                    stride_a,
+                                    stride_b,
+                                    stride_c,
+                                    bsz,
+                                    cublasGemmAlgo_t(_config.gemm_algos[1]));
+
+        // A need to transpose.
+        cublasOperation_t op_a = (_config.op_A == CUBLAS_OP_T ? CUBLAS_OP_N : CUBLAS_OP_T);
+
+        stride_a = _config.m * _config.k;
+        stride_b = _config.m * _config.n;
+        stride_c = _config.n * _config.k;
+
+        // Calculate d_B.
+        cublas_strided_batched_gemm(SE->handle,
+                                    _config.k,
+                                    _config.n,
+                                    _config.m,
+                                    &_config.alpha,
+                                    &_config.beta,
+                                    _buffer_a->get_device_data(),
+                                    d_output->get_device_data(),
+                                    inpGradB->get_device_data(),
+                                    op_a,
+                                    CUBLAS_OP_N,
+                                    stride_a,
+                                    stride_b,
+                                    stride_c,
+                                    bsz,
+                                    cublasGemmAlgo_t(_config.gemm_algos[2]));
+    }
+
 
     /* void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)
     {
