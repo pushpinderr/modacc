@@ -265,7 +265,8 @@ int main(int argc, char* argv[]) {
                             &grad_attn_ow_ptr,
                             &grad_attn_ob_ptr,
                             &SE,
-                            &buf_1);
+                            &buf_1,
+                            true);
     sw.stop();
     printf("_attn_out_linear.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
 
