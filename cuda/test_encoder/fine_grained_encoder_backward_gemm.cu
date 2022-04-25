@@ -59,7 +59,8 @@ int main(int argc, char* argv[]) {
                             &grad_attn_qkvw_ptr,
                             &grad_attn_qkvb_ptr,
                             &SE,
-                            &buf_2); 
+                            &buf_2,
+                            true); 
     } else {
         _qkv_linear.BackwardFineGrained(bsz,
                             nq,
@@ -69,7 +70,8 @@ int main(int argc, char* argv[]) {
                             &grad_attn_qkvw_ptr,
                             &grad_attn_qkvb_ptr,
                             &SE,
-                            &buf_2);
+                            &buf_2,
+                            true);
     }
     sw.stop();
     printf("_qkv_linear.Backward(): %f\n", sw.GetTimeInSeconds());

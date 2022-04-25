@@ -55,7 +55,8 @@ int main(int argc, char* argv[]) {
                             &grad_inter_w_ptr,
                             &grad_inter_b_ptr,
                             &SE,
-                            &buf_3);
+                            &buf_3,
+                            true);
     sw.stop();
     printf("_ff1.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
 

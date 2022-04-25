@@ -537,7 +537,8 @@ public:
                             Buffer<T>* weights_grad,
                             Buffer<T>* bias_grad,
                             ScheduleEngine* SE,
-                            Buffer<T>* inp_grad_out = nullptr)
+                            Buffer<T>* inp_grad_out = nullptr,
+                            bool sync = true)
     {
         float alpha = (T)1.0, beta = (T)0.0;
 
@@ -597,6 +598,9 @@ public:
 
             out_grad->copyD2H(SE->compute, offset, nq, i);      
         }
+
+        if ( sync == true )
+            CHECK(cudaThreadSynchronize());        
     }
 
     private:

@@ -1293,7 +1293,8 @@ public:
                   Buffer<T>* betta_grad,
                   ScheduleEngine* SE,
                   Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_in = nullptr)
+                  Buffer<T>* norm_in = nullptr,
+                  bool sync = true)
     {
         uint32_t batch_size = config_.batchSize; 
         uint32_t sequence_length = config_.seqLength; 
@@ -1342,6 +1343,9 @@ public:
 
             out_grad->copyD2H(SE->compute, offset, nq, i);            
         }
+
+        if ( sync == true )
+            CHECK(cudaThreadSynchronize());            
     }
 
     void BackwardFineGrained(int bsz,

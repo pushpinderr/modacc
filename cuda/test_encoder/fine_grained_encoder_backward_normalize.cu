@@ -62,10 +62,10 @@ int main(int argc, char* argv[]) {
                                     &grad_norm_b_ptr,
                                     &SE,
                                     &buf_1,
-                                    &inp_norm_ptr);
+                                    &inp_norm_ptr,
+                                    true);
     sw.stop();
     printf("_layer_norm.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
-                                        
-    
+                                           
     return 0;
 }

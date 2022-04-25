@@ -66,7 +66,8 @@ int main(int argc, char* argv[]) {
                     &grad_output_w_ptr,
                     &grad_output_b_ptr,
                     &SE,
-                    &ff2_buf);
+                    &ff2_buf,
+                    true);
     sw.stop();
     printf("_ff2.Backward(): %f\n", sw.GetTimeInSeconds());
 
