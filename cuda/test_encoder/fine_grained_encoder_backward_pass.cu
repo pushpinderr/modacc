@@ -296,6 +296,7 @@ int main(int argc, char* argv[]) {
                             nq,
                             &ff2_buf,
                             &ff1_inp_ptr,
+             
                             &inter_w_ptr,
                             &grad_inter_w_ptr,
                             &grad_inter_b_ptr,
@@ -370,7 +371,8 @@ int main(int argc, char* argv[]) {
     Buffer<float> attn_output_dropout_buf = _attn_output_dropout.HasDropout() ? buf_2 : buf_0;
 
     sw.restart();   
-    _attn_out_linear.Backward(bsz_seq,
+    _attn_out_linear.BackwardFineGrained(bsz_seq,
+                            nq,
                             &attn_output_dropout_buf,
                             &attn_o_inp_ptr,
                             &attn_ow_ptr,
