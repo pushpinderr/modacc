@@ -8,9 +8,6 @@
 #include "strided_gemm.h"
 
 int main(int argc, char* argv[]) {
-    int print_info=0;
-
-    std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
 
     int nq = atoi(argv[6]);
     int batch_size = atoi(argv[1]);
@@ -23,16 +20,16 @@ int main(int argc, char* argv[]) {
     Stopwatch sw;
     ScheduleEngine SE(8);
 
-    if(print_info){
-        std::cout << "################################################################" << std::endl;
-        std::cout << "batch size=" << batch_size << std::endl;
-        std::cout << "sequence length=" << sequence_length << std::endl;
-        std::cout << "hidden layer size=" << hidden_size << std::endl;
-        std::cout << "intermediate size=" << intermediate_size << std::endl;
-        std::cout << "number of queues=" << nq << std::endl;
-        std::cout << "################################################################" << std::endl;
-    }
-
+    std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
+    
+    std::cout << "################################################################" << std::endl;
+    std::cout << "batch size=" << batch_size << std::endl;
+    std::cout << "sequence length=" << sequence_length << std::endl;
+    std::cout << "hidden layer size=" << hidden_size << std::endl;
+    std::cout << "intermediate size=" << intermediate_size << std::endl;
+    std::cout << "number of queues=" << nq << std::endl;
+    std::cout << "################################################################" << std::endl;
+    
     FeedForward<float> _ff1(FeedForward<float>::Config(bsz_seq, 
                                                        intermediate_size,
                                                        hidden_size,
