@@ -70,13 +70,13 @@ void Transpose<float>(const float* inp_mat, float* out_mat, int rows, int cols, 
 }
 
 template <typename T>
-void launch_transform_0213(T* output,
-                           const T* vals,
+void launch_transform_0213(Buffer<T>* output,
+                           Buffer<T>* vals,
                            int batch_size,
                            int seq_length,
                            int hidden_dim,
                            int heads,
-                           cudaStream_t stream);
+                           ScheduleEngine* SE);
 
 template <typename T>
 __global__ void transform_0213(T* output,
@@ -148,55 +148,49 @@ __global__ void transform_0213<__half>(__half* output,
 }
 
 template <>
-void launch_transform_0213<float>(float* output,
-                                  const float* vals,
+void launch_transform_0213<float>(Buffer<float>* output,
+                                  Buffer<float>* vals,
                                   int batch_size,
                                   int seq_length,
                                   int hidden_dim,
                                   int heads,
-                                  cudaStream_t stream)
+                                  ScheduleEngine* SE)
 {
     hidden_dim >>= 2;
     int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
     dim3 block_dim(hidden_dim / heads, (heads / head_ext));
     dim3 grid_dim(batch_size, (seq_length * head_ext));
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif
-    transform_0213<float>
-        <<<grid_dim, block_dim, 0, stream>>>(output, vals, hidden_dim, seq_length, heads, head_ext);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-}
 
-template <>
-void launch_transform_0213<__half>(__half* output,
-                                   const __half* vals,
-                                   int batch_size,
-                                   int seq_length,
-                                   int hidden_dim,
-                                   int heads,
-                                   cudaStream_t stream)
-{
-    hidden_dim >>= 3;
-    int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
-    dim3 block_dim(hidden_dim / heads, (heads / head_ext));
-    dim3 grid_dim(batch_size, (seq_length * head_ext));
-#if EVENT_PROFILE
-        Stopwatch sw;
+    #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+    #endif
+
+    output->copyH2D(SE->compute);
+    vals->copyH2D(SE->compute);
+
+    #if EVENT_PROFILE
         sw.restart();
-#endif
-    transform_0213<__half>
-        <<<grid_dim, block_dim, 0, stream>>>(output, vals, hidden_dim, seq_length, heads, head_ext);
-#if EVENT_PROFILE
+        printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+        sw.restart();
+    #endif    
+
+    transform_0213<float>
+        <<<grid_dim, block_dim, 0, SE->getStream(0)>>>(output->get_device_data(), vals->get_device_data(), hidden_dim, seq_length, heads, head_ext);
+
+    #if EVENT_PROFILE
+        sw.restart();
+        printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+        sw.restart();
+    #endif    
+
+    output->copyD2H(SE->compute);
+
+    #if EVENT_PROFILE
         sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+        printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
         sw.restart();
-#endif
+    #endif
 }
 
 // Bias add
@@ -612,81 +606,86 @@ __global__ void transform4d_0213_v2(__half* out,
 }
 // 4D transform [0, 1, 2, 3] -> [0, 2, 1, 3]
 template <typename T>
-void launch_transform4d_0213(T* out,
-                             const T* in,
+void launch_transform4d_0213(Buffer <T>* out,
+                             Buffer <T>* in,
                              int batch_size,
                              int heads,
                              int seq_length,
                              int hidden_dim,
-                             cudaStream_t stream,
+                             ScheduleEngine* SE,
                              int trans_count);
 
 // 3 * [B A S N] - > [B S C*H]
 template <>
-void launch_transform4d_0213<float>(float* out,
-                                    const float* in,
+void launch_transform4d_0213<float>(Buffer<float>* out,
+                                    Buffer<float>* in,
                                     int batch_size,
                                     int heads,
                                     int seq_length,
                                     int hidden_dim,
-                                    cudaStream_t stream,
+                                    ScheduleEngine* SE,
                                     int trans_count)
 {
     hidden_dim >>= 2;
     dim3 grid_dims(batch_size, heads * ((seq_length - 1) / 8 + 1), trans_count);
     dim3 block_dims(hidden_dim / heads, 8);
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif    
-transform4d_0213<float>
-        <<<grid_dims, block_dims, 0, stream>>>(out, in, heads, seq_length, hidden_dim, 1);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
+    #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+    #endif    
+    out->copyH2D(SE->compute);
+    in->copyH2D(SE->compute);
+    
+    transform4d_0213<float>
+            <<<grid_dims, block_dims, 0, SE->getStream(0)>>>(out->get_device_data(), in->get_device_data(), heads, seq_length, hidden_dim, 1);
+    #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+    #endif
+
+    out->copyD2H(SE->compute);
 }
 
-template <>
-void launch_transform4d_0213<__half>(__half* out,
-                                     const __half* in,
-                                     int batch_size,
-                                     int heads,
-                                     int seq_length,
-                                     int hidden_dim,
-                                     cudaStream_t stream,
-                                     int trans_count)
-{
-    hidden_dim >>= 3;
-    if (hidden_dim > 128 || hidden_dim < 16) {
-        int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
-        dim3 grid_dims(batch_size, trans_count, (seq_length * head_ext));
-        dim3 block_dims(hidden_dim / heads, (heads / head_ext));
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif      
-  transform4d_0213<__half><<<grid_dims, block_dims, 0, stream>>>(
-            out, in, heads, seq_length, hidden_dim, head_ext);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif    
-} else {
-        dim3 grid_dims(batch_size, seq_length / 2);
-        dim3 block_dims(hidden_dim / heads, heads, trans_count);
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif      
-  transform4d_0213_v2<<<grid_dims, block_dims, 0, stream>>>(
-            out, in, heads, seq_length, hidden_dim);
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif
-    }
-}
+// template <>
+// void launch_transform4d_0213<__half>(__half* out,
+//                                      const __half* in,
+//                                      int batch_size,
+//                                      int heads,
+//                                      int seq_length,
+//                                      int hidden_dim,
+//                                      ScheduleEngine* SE,
+//                                      int trans_count)
+// {
+//     hidden_dim >>= 3;
+//     if (hidden_dim > 128 || hidden_dim < 16) {
+//         int head_ext = (hidden_dim - 1) / MAX_THREADS + 1;
+//         dim3 grid_dims(batch_size, trans_count, (seq_length * head_ext));
+//         dim3 block_dims(hidden_dim / heads, (heads / head_ext));
+// #if EVENT_PROFILE
+//         Stopwatch sw;
+//         sw.restart();
+// #endif      
+//   transform4d_0213<__half><<<grid_dims, block_dims, 0, SE->getStream(0)>>>(
+//             out, in, heads, seq_length, hidden_dim, head_ext);
+// #if EVENT_PROFILE
+//         sw.stop();
+//         printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+//         sw.restart();
+// #endif    
+// } else {
+//         dim3 grid_dims(batch_size, seq_length / 2);
+//         dim3 block_dims(hidden_dim / heads, heads, trans_count);
+// #if EVENT_PROFILE
+//         Stopwatch sw;
+//         sw.restart();
+// #endif      
+//   transform4d_0213_v2<<<grid_dims, block_dims, 0, SE->getStream(0)>>>(
+//             out, in, heads, seq_length, hidden_dim);
+// #if EVENT_PROFILE
+//         sw.stop();
+//         printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+//         sw.restart();
+// #endif
+//     }
+// }

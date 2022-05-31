@@ -15,26 +15,26 @@ int main(int argc, char* argv[]) {
     int nh = atoi(argv[5]);
     int nq = atoi(argv[6]);
     bool sync = true;
-    float layernorm_eps=0.000001; 
+    float layernorm_eps = 0.000001; 
     bool _pre_or_postLayerNorm = false;
-    bool _gelu_checkpoint = false;
+    bool _gelu_checkpoint = true;
     bool _attn_dropout_checkpoint= false;
 
     cublasHandle_t _cublasHandle;
 
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
-    std::cout << "################################################################" << std::endl;
-    std::cout << "batch size=" << batch_size << std::endl;
-    std::cout << "sequence length=" << sequence_length << std::endl;
-    std::cout << "hidden layer size=" << hidden_size << std::endl;
-    std::cout << "intermediate size=" << intermediate_size << std::endl;
-    std::cout << "number of heads=" << nh << std::endl;
-    std::cout << "number of queues=" << nq << std::endl;
-    std::cout << "sync flag=" << sync << std::endl;
-    std::cout << "################################################################" << std::endl;
+    std::cout << "+----------------------------------------------------------+" << std::endl;
+    std::cout << "|  Batch Size         :   "<< batch_size <<"                                |"<< std::endl;
+    std::cout << "|  Sequence Length    :   "<< sequence_length<<"                              |"<< std::endl;
+    std::cout << "|  Hidden Layer Size  :   "<< hidden_size <<"                              |"<< std::endl;
+    std::cout << "|  Intermediate Size  :   "<< intermediate_size <<"                              |"<< std::endl;
+    std::cout << "|  Number of Heads    :   "<< nh <<"                                |"<< std::endl;
+    std::cout << "|  Number of Queues   :   "<< nq <<"                               |"<<std::endl;
+    std::cout << "|  Sync Flag          :   "<< sync <<"                                |"<<std::endl;
+    std::cout << "+----------------------------------------------------------+" << std::endl;
 
     Stopwatch sw, sw1;
-    ScheduleEngine SE(8);
+    ScheduleEngine SE(nq);
 
     int bsz = batch_size * sequence_length;
     int bsz_seq = batch_size * sequence_length;
@@ -109,7 +109,6 @@ int main(int argc, char* argv[]) {
 
     Buffer<float> norm_var(batch_size * sequence_length, &SE);
     Buffer<float> norm_mean(batch_size * sequence_length, &SE);
-    Buffer<float> buf_1(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> attn_norm_var(batch_size * sequence_length, &SE);
     Buffer<float> attn_norm_mean(batch_size * sequence_length, &SE);
     Buffer<float> inter_b(intermediate_size, &SE);
@@ -134,7 +133,9 @@ int main(int argc, char* argv[]) {
     Buffer<float> grad_attn_ow_ptr(batch_size * hidden_size * hidden_size, &SE);
     Buffer<float> grad_attn_ob_ptr(hidden_size, &SE);
 
-    Buffer<float> soft_out_ptr(batch_size * sequence_length * sequence_length * nh, &SE);
+    Buffer<float> soft_out_ptr(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
+    //Buffer<float> soft_out_ptr(batch_size * sequence_length * sequence_length * nh, &SE);
+   
     Buffer<float> ctx_bufB_ptr(batch_size * sequence_length * sequence_length * nh, &SE);
     Buffer<float> q_tf_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> k_tf_ptr(batch_size * sequence_length * hidden_size, &SE);
@@ -146,7 +147,11 @@ int main(int argc, char* argv[]) {
     Buffer<float> attn_qkvw_ptr(3 * hidden_size * hidden_size, &SE);
     Buffer<float> grad_attn_qkvw_ptr(3 * hidden_size * hidden_size, &SE);
     Buffer<float> norm_w_ptr(hidden_size, &SE);
-    Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size, &SE);
+
+    Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+
+//    Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size, &SE);
+    
     Buffer<float> norm_b_ptr(hidden_size, &SE);
 
     Buffer<float> ff2_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
@@ -155,35 +160,49 @@ int main(int argc, char* argv[]) {
     Buffer<float> output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_b_ptr(hidden_size, &SE);
- 
-    Buffer<float> buf_0(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> buf_2(batch_size * sequence_length * hidden_size + bsz * sequence_length * hidden_size, &SE);
-    Buffer<float> buf_3(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
 
-    Buffer<float> ff2_buf(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_0(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+
+    //Buffer<float> buf_0(batch_size * sequence_length * hidden_size, &SE);
+    // Buffer<float> buf_1(batch_size * sequence_length * hidden_size, &SE);
+
+    Buffer<float> buf_1(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
+
+   //Buffer<float> buf_1(batch_size * sequence_length * hidden_size + bsz * sequence_length * hidden_size, &SE);
+
+ //   Buffer<float> buf_2(batch_size * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_2(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_3(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size, &SE);
+
+    // Buffer<float> ff2_buf(batch_size * sequence_length * hidden_size, &SE);
+
+    Buffer<float> ff2_buf(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
     Buffer<float> ctx_bufB_ptr_recomp(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size + (sequence_length * sequence_length * bsz * bsz_heads), &SE);
+
+    Buffer<uint8_t> attn_output_dropout_mask(batch_size * sequence_length * hidden_size, &SE); 
 
     _layer_norm.SetMeansAndVariance(&norm_mean, &norm_var);
     _attn_layer_norm.SetMeansAndVariance(&attn_norm_mean, &attn_norm_var);
+    //_attn_output_dropout.SetMask(&attn_output_dropout_mask);
 
     sw1.start();
-    printf("Fine Grained Backward propogation starts: %f\n", sw1.GetTimeInSeconds());
+    printf("Backward propogation starts: %f\n", sw1.GetTimeInSeconds());
 
     if (!_pre_or_postLayerNorm) {
         sw.start();
         if (_layer_norm.UseMean()) {
-            _layer_norm.BackwardFineGrained(bsz_seq,
-                                    nq,
+            _layer_norm.Backward(bsz_seq,
                                     &grad_output_ptr,
                                     &norm_w_ptr,
                                     &grad_norm_w_ptr,
                                     &grad_norm_b_ptr,
                                     &SE,
                                     &buf_1,
-                                    &inp_norm_ptr);
+                                    &inp_norm_ptr,
+                                    true);
+                                    
         } else {
-            _layer_norm.BackwardFineGrained(bsz_seq,
-                                    nq,
+            _layer_norm.Backward(bsz_seq,
                                     &grad_output_ptr,
                                     &norm_w_ptr,
                                     &norm_b_ptr,
@@ -191,79 +210,78 @@ int main(int argc, char* argv[]) {
                                     &grad_norm_b_ptr,
                                     &SE,
                                     &buf_1,
-                                    &output_ptr);
+                                    &output_ptr,
+                                    true);
         }
-        CHECK(cudaThreadSynchronize());
+        CHECK(cudaDeviceSynchronize());        
         sw.stop();
-        printf("_layer_norm.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+        printf("_layer_norm.Backward(): %f\n", sw.GetTimeInSeconds());
     }
 
-    
     sw.restart();
     if (_pre_or_postLayerNorm) {
-        _layer_output_dropout.BackwardFineGrained(bsz_seq, nq, &buf_0, &grad_output_ptr, &SE);
+        _layer_output_dropout.Backward(bsz_seq, &buf_0, &grad_output_ptr,  &attn_output_dropout_mask, &SE);
     } else {
-        _layer_output_dropout.BackwardFineGrained(bsz_seq, nq, &buf_0, &buf_1, &SE);
+        _layer_output_dropout.Backward(bsz_seq, &buf_0, &buf_1, &attn_output_dropout_mask, &SE);
     }       
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
-    printf("_layer_output_dropout.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_layer_output_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
 
     Buffer<float> layer_dropout_buf = _layer_output_dropout.HasDropout()
                                       ? buf_0
-                                      : (_pre_or_postLayerNorm ? grad_output_ptr : buf_1);  
+                                      : (_pre_or_postLayerNorm ? grad_output_ptr : buf_1);
 
     if (_gelu_checkpoint) {
         sw.restart();
         _gelu.ForwardWithBiasAdd(bsz_seq, &ff2_inp_ptr, &inter_b, &buf_2, &SE);
-        CHECK(cudaThreadSynchronize());
+        CHECK(cudaDeviceSynchronize());
         sw.stop();
         printf("_gelu.ForwardWithBiasAdd(): %f\n", sw.GetTimeInSeconds());
     }
 
     sw.restart();
-    _ff2.BackwardFineGrained(bsz_seq,
-                    nq,
+    _ff2.Backward(bsz_seq,
                     &layer_dropout_buf,
-                    (_gelu_checkpoint ? &buf_2 : &ff2_inp_ptr),
+                    &ff2_inp_ptr,
                     &output_w_ptr,
                     &grad_output_w_ptr,
                     &grad_output_b_ptr,
                     &SE,
-                    &ff2_buf);
-    CHECK(cudaThreadSynchronize());
+                    &ff2_buf,
+                    true);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
-    printf("_ff2.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_ff2.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
-    _gelu.BackwardFineGrained(bsz_seq, 
-                            nq,
+    _gelu.Backward(bsz_seq, 
                             &ff2_buf,
-                            (_gelu_checkpoint ? &ff2_inp_ptr : &gelu_inp_ptr),
+                            &gelu_inp_ptr,
                             &inter_b,
                             &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
-    printf("_gelu.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_gelu.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
-    _ff1.BackwardFineGrained(bsz_seq,
-                            nq,
-                            &ff2_buf,
-                            &ff1_inp_ptr,             
-                            &inter_w_ptr,
-                            &grad_inter_w_ptr,
-                            &grad_inter_b_ptr,
-                            &SE,
-                            &buf_3);
-    CHECK(cudaThreadSynchronize());                            
+    _ff1.Backward(bsz_seq,
+                    &ff2_buf,
+                    &ff1_inp_ptr,
+                    &inter_w_ptr,
+                    &grad_inter_w_ptr,
+                    &grad_inter_b_ptr,
+                    &SE,
+                    &buf_3,
+                    true);
+    CHECK(cudaDeviceSynchronize());                            
     sw.stop();
-    printf("_ff1.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_ff1.Backward(): %f\n", sw.GetTimeInSeconds());
 
     if (!_pre_or_postLayerNorm) {
         sw.restart();
-        launch_fused_add2<float>(buf_2.get_device_data(), buf_3.get_device_data(), buf_1.get_device_data(), bsz, sequence_length, hidden_size, SE.getStream(0));
-        CHECK(cudaThreadSynchronize());
+        launch_fused_add2<float>(&buf_2, &buf_3, &buf_1, batch_size, sequence_length, hidden_size, &SE);
+        CHECK(cudaDeviceSynchronize());                            
         sw.stop();
         printf("launch_fused_add2(): %f\n", sw.GetTimeInSeconds());        
     }
@@ -294,57 +312,57 @@ int main(int argc, char* argv[]) {
         }
     } else {
         if (_attn_layer_norm.UseMean()) {
-            _attn_layer_norm.BackwardFineGrained(bsz_seq,
-                                                nq,
-                                                &buf_2,
-                                                &attn_nw_ptr,
-                                                &grad_attn_nw_ptr,
-                                                &grad_attn_nb_ptr,
-                                                &SE,
-                                                &buf_0,
-                                                &add_res_ptr);
+            _attn_layer_norm.Backward(bsz_seq,
+                                        &buf_2,
+                                        &attn_nw_ptr,
+                                        &grad_attn_nw_ptr,
+                                        &grad_attn_nb_ptr,
+                                        &SE,
+                                        &buf_0,
+                                        &add_res_ptr,
+                                        true);
         } else {
-            _attn_layer_norm.BackwardFineGrained(bsz_seq,
-                                                nq,
-                                                &buf_2,
-                                                &attn_nw_ptr,
-                                                &attn_nb_ptr,
-                                                &grad_attn_nw_ptr,
-                                                &grad_attn_nb_ptr,
-                                                &SE,
-                                                &buf_0,
-                                                &ff1_inp_ptr);
+            _attn_layer_norm.Backward(bsz_seq,
+                                        &buf_2,
+                                        &attn_nw_ptr,
+                                        &attn_nb_ptr,
+                                        &grad_attn_nw_ptr,
+                                        &grad_attn_nb_ptr,
+                                        &SE,
+                                        &buf_0,
+                                        &ff1_inp_ptr,
+                                        true);
         }       
     }
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_layer_norm.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
-    _attn_output_dropout.BackwardFineGrained(bsz_seq, nq, &buf_2, &buf_0, &SE);
-    CHECK(cudaThreadSynchronize());
+    _attn_output_dropout.Backward(bsz_seq, &buf_2, &buf_0,  &attn_output_dropout_mask, &SE);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_output_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
     
     Buffer<float> attn_output_dropout_buf = _attn_output_dropout.HasDropout() ? buf_2 : buf_0;
 
     sw.restart();   
-    _attn_out_linear.BackwardFineGrained(bsz_seq,
-                            nq,
+    _attn_out_linear.Backward(bsz_seq,
                             &attn_output_dropout_buf,
                             &attn_o_inp_ptr,
                             &attn_ow_ptr,
                             &grad_attn_ow_ptr,
                             &grad_attn_ob_ptr,
                             &SE,
-                            &buf_1);
-    CHECK(cudaThreadSynchronize());
+                            &buf_1,
+                            true);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_out_linear.Backward(): %f\n", sw.GetTimeInSeconds());
 
-    sw.restart();   
-    launch_transform_0213<float>(buf_2.get_device_data(), buf_1.get_device_data(), bsz, sequence_length, hidden_size, nh, SE.getStream(0));
-    CHECK(cudaThreadSynchronize());
+    sw.restart(); 
+    launch_transform_0213<float>(&buf_2, &buf_1, batch_size, sequence_length, hidden_size, nh, &SE);  
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("launch_transform_0213(): %f\n", sw.GetTimeInSeconds());
 
@@ -374,25 +392,26 @@ int main(int argc, char* argv[]) {
                                 &buf_3, 
                                 &ff2_buf);
     }
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_context.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
-    _attn_prob_dropout.BackwardFineGrained(bsz_heads * sequence_length, 
-                                            nq, 
-                                            &ff2_buf, 
-                                            &SE);
-    CHECK(cudaThreadSynchronize());
+    _attn_prob_dropout.Backward(bsz_heads * sequence_length,
+                                &ff2_buf,
+                                &attn_output_dropout_mask,
+                                &SE);
+
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
-    printf("_attn_prob_dropout.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_attn_prob_dropout.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
     _softmax.Backward(bsz, 
                         &ff2_buf, 
                         &soft_out_ptr, 
                         &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_softmax.Backward(): %f\n", sw.GetTimeInSeconds());
 
@@ -404,41 +423,41 @@ int main(int argc, char* argv[]) {
                             &SE, 
                             &buf_2, 
                             &buf_1);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_scores.Backward(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
-    launch_transform4d_0213(ff2_buf.get_device_data(), buf_1.get_device_data(), bsz, nh, sequence_length, hidden_size, SE.getStream(0), 3);
-    CHECK(cudaThreadSynchronize());
+    launch_transform4d_0213(&ff2_buf, &buf_1, bsz, nh, sequence_length, hidden_size, &SE, 3);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("launch_transform4d_0213(): %f\n", sw.GetTimeInSeconds());
 
     sw.restart();
     if (_pre_or_postLayerNorm) {
-       _qkv_linear.BackwardFineGrained(bsz_seq,
-                            nq,
+       _qkv_linear.Backward(bsz_seq,
                             &ff2_buf,
                             &inp_norm_ptr,
                             &attn_qkvw_ptr,
                             &grad_attn_qkvw_ptr,
                             &grad_attn_qkvb_ptr,
                             &SE,
-                            &buf_2); 
+                            &buf_2,
+                            true);
     } else {
-        _qkv_linear.BackwardFineGrained(bsz_seq,
-                            nq,
+        _qkv_linear.Backward(bsz_seq,
                             &ff2_buf,
                             &input_ptr,
                             &attn_qkvw_ptr,
                             &grad_attn_qkvw_ptr,
                             &grad_attn_qkvb_ptr,
                             &SE,
-                            &buf_2);
+                            &buf_2,
+                            true);
     }
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
-    printf("_qkv_linear.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
+    printf("_qkv_linear.Backward(): %f\n", sw.GetTimeInSeconds());
 
     if (_pre_or_postLayerNorm) {
         sw.restart();
@@ -469,20 +488,20 @@ int main(int argc, char* argv[]) {
         printf("_layer_norm.BackwardFusedAdd(): %f\n", sw.GetTimeInSeconds());
     } else {
         sw.restart();
-        launch_fused_add2<float>(grad_input_ptr.get_device_data(), 
-                                    buf_2.get_device_data(), 
-                                    buf_0.get_device_data(), 
+        launch_fused_add2<float>(&grad_input_ptr, 
+                                    &buf_2, 
+                                    &buf_0, 
                                     bsz, 
                                     sequence_length, 
                                     hidden_size, 
-                                    SE.getStream(0));
-        CHECK(cudaThreadSynchronize());
+                                    &SE);
+        CHECK(cudaDeviceSynchronize());
         sw.stop();
         printf("launch_fused_add2(): %f\n", sw.GetTimeInSeconds());        
     }
 
     sw1.stop();
-    printf("Fine Grained Backward propogation ends: %f\n", sw1.GetTimeInSeconds());
+    printf("Backward propogation ends: %f\n", sw1.GetTimeInSeconds());
 
     return 0;
 }

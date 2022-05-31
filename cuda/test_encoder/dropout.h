@@ -716,6 +716,7 @@ template void launch_dropout(__half*,
                              int dim,
                              float ratio,
                              cudaStream_t stream);
+
 __global__ void dropout_grad_kernel(const int N, const float scale, float* Xdata, uint8_t* mask)
 {
     CUDA_1D_KERNEL_LOOP(i, N) { Xdata[i] *= scale * mask[i]; }
@@ -783,7 +784,7 @@ __global__ void dropout_grad_kernel(const int N,
                                     float* out,
                                     uint8_t* mask)
 {
-    CUDA_1D_KERNEL_LOOP(i, N) { out[i] = Xdata[i] * scale * mask[i]; }
+    CUDA_1D_KERNEL_LOOP(i, N) { out[i] = Xdata[i] * scale * mask[i];}
 }
 
 __global__ void dropout_grad_kernel(const int N,
@@ -799,6 +800,7 @@ __global__ void dropout_grad_kernel(const int N,
     float2 result_f;
     __half2* result_h = reinterpret_cast<__half2*>(&result_f);
 
+    
     CUDA_1D_KERNEL_LOOP(j, N / unroll_factor)
     {
         float2 x_data = x_cast[j];
@@ -818,8 +820,10 @@ __global__ void dropout_grad_kernel(const int N,
 
         out_cast[j] = result_f;
     }
+    
     int high_index =
         ((((N / unroll_factor) - 1) / blockDim.x + 1) * (unroll_factor * blockDim.x)) + threadIdx.x;
+
     if (N > high_index) {
         for (int i = high_index; i < N; i++) {
             out[i] = __float2half((float)Xdata[i] * scale * mask[i]);
@@ -839,18 +843,6 @@ void launch_dropout_grad(T* vals, uint8_t* mask, int total_count, float ratio, c
                           stream>>>(total_count, scale, vals, mask);
 }
 
-template void launch_dropout_grad(float* vals,
-                                  uint8_t* mask,
-                                  int total_count,
-                                  float ratio,
-                                  cudaStream_t stream);
-                                  
-template void launch_dropout_grad(__half* vals,
-                                  uint8_t* mask,
-                                  int total_count,
-                                  float ratio,
-                                  cudaStream_t stream);
-
 template <typename T>
 void launch_dropout_grad(T* vals_out,
                          const T* vals,
@@ -860,7 +852,7 @@ void launch_dropout_grad(T* vals_out,
                          cudaStream_t stream)
 {
     assert(unroll_factor == 4);
-
+    
     const float scale = 1. / (1. - ratio);
     dropout_grad_kernel<<<DS_GET_BLOCKS(total_count / unroll_factor),
                           DS_CUDA_NUM_THREADS,
@@ -868,14 +860,26 @@ void launch_dropout_grad(T* vals_out,
                           stream>>>(total_count, scale, vals, vals_out, mask);
 }
 
-template void launch_dropout_grad(float*,
+template void launch_dropout_grad(float* vals,
+                                  uint8_t* mask,
+                                  int total_count,
+                                  float ratio,
+                                  cudaStream_t stream);
+
+template void launch_dropout_grad(float* vals_out,
                                   const float* vals,
                                   uint8_t* mask,
                                   int total_count,
                                   float ratio,
                                   cudaStream_t stream);
 
-template void launch_dropout_grad(__half*,
+template void launch_dropout_grad(__half* vals,
+                                  uint8_t* mask,
+                                  int total_count,
+                                  float ratio,
+                                  cudaStream_t stream);
+
+template void launch_dropout_grad(__half* vals_out,
                                   const __half* vals,
                                   uint8_t* mask,
                                   int total_count,
@@ -957,59 +961,101 @@ public:
 
         #if EVENT_PROFILE
             sw.stop();
-            printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+            printf("Kernel Time: %lf\n\n", sw.GetTimeInSeconds());
             sw.restart();
         #endif    
     }
 
     void Backward(int bsz,
                 Buffer<T>* d_vals,
-                ScheduleEngine* SE, 
-                int q_index=0)
+                ScheduleEngine* SE)
     {
         launch_dropout_grad<T>(d_vals->get_device_data(), 
                             _mask,
                             bsz * _config.dim,
                             _config.RATIO(),
-                            SE->getStream(q_index));
+                            SE->getStream(0));
     }
 
     void Backward(int bsz,
                 Buffer<T>* d_vals_out,
                 Buffer<T>* d_vals,
-                ScheduleEngine* SE,
-                int q_index=0)
+                Buffer<uint8_t>* mask,                
+                ScheduleEngine* SE)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.start();
+        #endif        
+        
+        d_vals->copyH2D(SE->compute);
+        d_vals_out->copyH2D(SE->compute);
+        mask->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_dropout_grad<T>(d_vals_out->get_device_data(),
                             d_vals->get_device_data(),
-                            _mask,
+                            mask->get_device_data(),
                             bsz * _config.dim,
                             _config.RATIO(),
-                            SE->getStream(q_index));
+                            SE->getStream(0));
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                            
+
+        d_vals_out->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+        #endif          
     }
+
+    void Backward(int bsz,
+                Buffer<T>* d_vals,
+                Buffer<uint8_t>* mask,                
+                ScheduleEngine* SE)
+    {
+        printf("dvals no of elements: %d; mask no of elements: %d \n", d_vals->get_num_elements(), mask->get_num_elements());
+
+        d_vals->copyH2D(SE->compute);
+        mask->copyH2D(SE->compute);
+          
+        launch_dropout_grad<T>(d_vals->get_device_data(),
+                            mask->get_device_data(),
+                            bsz * _config.dim,
+                            _config.RATIO(),
+                            SE->getStream(0));
+                            
+        d_vals->copyD2H(SE->compute);
+    }    
 
     void BackwardFineGrained(int bsz,
                             int nq,
                             Buffer<T>* d_vals,
+                            Buffer<uint8_t>* mask,
                             ScheduleEngine* SE, 
                             int q_index=0)
     {
-        uint32_t sequence_length = _config.dim; 
-        std::cout << "BackwardFineGrained\n";
         int offset = 0;
         int partition_size = (bsz / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
+
+        d_vals->copyH2D(SE->compute);
         
-        //d_vals->copyH2D(SE->compute);
-        std::cout << "creating queues" << std::endl;
+        // mask->copyH2D(SE->compute);
 
-        Stopwatch sw;
-        sw.start();
-
-        for (int i = 0; i<nq; i++) {
-            offset = i * partition_size * sequence_length; 
-            
-            d_vals->copyH2D(SE->compute, offset, nq, i);
+        for (int i = 0; i < nq; i++) {
+            offset = i * partition_size;
+          
+            mask->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
@@ -1022,36 +1068,33 @@ public:
             cublasSetStream(SE->handle, SE->compute[i]);
 
             launch_dropout_grad<T>(d_vals->get_device_data(), 
-                            _mask,
+                            mask->get_device_data(offset),
                             bsz * _config.dim,
                             _config.RATIO(),
                             SE->getStream(q_index));
         }
+
+        d_vals->copyD2H(SE->compute);
     }
 
     void BackwardFineGrained(int bsz,
                             int nq,
                             Buffer<T>* d_vals_out,
                             Buffer<T>* d_vals,
+                            Buffer<uint8_t>* mask,
                             ScheduleEngine* SE,
                             int q_index=0)
     {
         uint32_t sequence_length = _config.dim;
-        std::cout << "BackwardFineGrained\n";
         int offset = 0;
         int partition_size = (bsz / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
-        
-        d_vals->copyH2D(SE->compute);
-        std::cout << "creating queues" << std::endl;
 
-        Stopwatch sw;
-        sw.start();
+        for (int i = 0; i < nq; i++) {
+            offset = i * partition_size;
 
-        for (int i = 0; i<nq; i++) {
-            offset = i * partition_size * sequence_length; 
-            
-            d_vals_out->copyH2D(SE->compute, offset, nq, i);
+            d_vals->copyH2D(SE->compute,  offset, nq, i);
+            d_vals_out->copyH2D(SE->compute,  offset, nq, i);            
+            mask->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
@@ -1064,8 +1107,8 @@ public:
             cublasSetStream(SE->handle, SE->compute[i]);
 
             launch_dropout_grad<T>(d_vals_out->get_device_data(offset),
-                            d_vals->get_device_data(),
-                            _mask,
+                            d_vals->get_device_data(offset),
+                            mask->get_device_data(offset),
                             bsz * _config.dim,
                             _config.RATIO(),
                             SE->getStream(q_index));

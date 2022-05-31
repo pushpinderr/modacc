@@ -13,19 +13,16 @@ int main(int argc, char* argv[]) {
     int hidden_size = atoi(argv[3]);
     int intermediate_size = atoi(argv[4]);
     int nq = atoi(argv[6]);
-    int print_info=0;
 
     float layernorm_eps=0.000001;     
 
-    if(print_info){
-        std::cout << "################################################################" << std::endl;
-        std::cout << "batch size=" << batch_size << std::endl;
-        std::cout << "sequence length=" << sequence_length << std::endl;
-        std::cout << "hidden layer size=" << hidden_size << std::endl;
-        std::cout << "intermediate size=" << intermediate_size << std::endl;
-        std::cout << "number of queues=" << nq << std::endl;
-        std::cout << "################################################################" << std::endl;
-    }
+    std::cout << "################################################################" << std::endl;
+    std::cout << "batch size=" << batch_size << std::endl;
+    std::cout << "sequence length=" << sequence_length << std::endl;
+    std::cout << "hidden layer size=" << hidden_size << std::endl;
+    std::cout << "intermediate size=" << intermediate_size << std::endl;
+    std::cout << "number of queues=" << nq << std::endl;
+    std::cout << "################################################################" << std::endl;
 
     Stopwatch sw;
     ScheduleEngine SE(8);

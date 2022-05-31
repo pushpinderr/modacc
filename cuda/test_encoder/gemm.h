@@ -46,29 +46,57 @@ __global__ void fused_add2_kernel(const int N, float* out, const float* inp1, co
 }
 
 template <typename T>
-void launch_fused_add2(T* out,
-                        const T* inp1,
-                        const T* inp2,
+void launch_fused_add2(Buffer<T>* out,
+                        Buffer<T>* inp1,
+                        Buffer<T>* inp2,
                         int batch_size,
                         int seq_length,
                         int hidden_dim,
-                        cudaStream_t stream);
+                        ScheduleEngine* SE);
 
 template <>
-void launch_fused_add2(float* out,
-                              const float* inp1,
-                              const float* inp2,
+void launch_fused_add2(Buffer<float>* out,
+                              Buffer<float>* inp1,
+                              Buffer<float>* inp2,
                               int batch_size,
                               int seq_length,
                               int hidden_dim,
-                              cudaStream_t stream)
+                              ScheduleEngine* SE)
 {
     int total_count = batch_size * seq_length * hidden_dim / 4;
     dim3 grid_dim = DS_GET_BLOCKS(total_count);  //(batch_size * seq_length);
 
     dim3 block_dim = DS_CUDA_NUM_THREADS;  //(hidden_dim / 4);
 
-    fused_add2_kernel<<<grid_dim, block_dim, 0, stream>>>(total_count, out, inp1, inp2);
+    #if EVENT_PROFILE
+        Stopwatch sw;
+        sw.start();
+    #endif       
+
+    out->copyH2D(SE->compute);
+    inp1->copyH2D(SE->compute);
+    inp2->copyH2D(SE->compute);
+
+    #if EVENT_PROFILE
+        sw.stop();
+        printf("H2D Time: %lf\n",sw.GetTimeInSeconds());
+        sw.restart();        
+    #endif           
+
+    fused_add2_kernel<<<grid_dim, block_dim, 0, SE->getStream(0)>>>(total_count, out->get_device_data(), inp1->get_device_data(), inp2->get_device_data());
+    
+    #if EVENT_PROFILE
+        sw.stop();
+        printf("Kernel Time: %lf\n",sw.GetTimeInSeconds());
+        sw.restart();        
+    #endif
+
+    out->copyD2H(SE->compute);
+    
+    #if EVENT_PROFILE
+        sw.stop();
+        printf("D2H Time: %lf\n\n",sw.GetTimeInSeconds());
+    #endif       
 }
 
 int cublas_gemm_ex(cublasHandle_t handle,
@@ -108,6 +136,7 @@ int cublas_gemm_ex(cublasHandle_t handle,
         fprintf(stderr, "!!!! kernel execution error. (m: %d, n: %d, k: %d, error: %d) \n", m, n, k, (int)status);
         return EXIT_FAILURE;
     }
+
     return 0;
 }
 
@@ -196,57 +225,58 @@ int cublas_strided_batched_gemm(cublasHandle_t handle,
         fprintf(stderr, "!!!! kernel execution error. (batch: %d, m: %d, n: %d, k: %d, error: %d) \n", batch, m, n, k, (int)status);
         return EXIT_FAILURE;
     }
+    
     return 0;
 }
 
-int cublas_strided_batched_gemm(cublasHandle_t handle,
-                                int m,
-                                int n,
-                                int k,
-                                const float* alpha,
-                                const float* beta,
-                                const __half* A,
-                                const __half* B,
-                                __half* C,
-                                cublasOperation_t op_A,
-                                cublasOperation_t op_B,
-                                int stride_A,
-                                int stride_B,
-                                int stride_C,
-                                int batch,
-                                cublasGemmAlgo_t algo)
-{
-    cublasStatus_t status = cublasGemmStridedBatchedEx(handle,
-                                                       op_A,
-                                                       op_B,
-                                                       m,
-                                                       n,
-                                                       k,
-                                                       alpha,
-                                                       A,
-                                                       CUDA_R_16F,
-                                                       (op_A == CUBLAS_OP_N) ? m : k,
-                                                       stride_A,
-                                                       B,
-                                                       CUDA_R_16F,
-                                                       (op_B == CUBLAS_OP_N) ? k : n,
-                                                       stride_B,
-                                                       beta,
-                                                       C,
-                                                       CUDA_R_16F,
-                                                       m,
-                                                       stride_C,
-                                                       batch,
-                                                       CUDA_R_32F,
-                                                       algo);
+// int cublas_strided_batched_gemm(cublasHandle_t handle,
+//                                 int m,
+//                                 int n,
+//                                 int k,
+//                                 const float* alpha,
+//                                 const float* beta,
+//                                 const __half* A,
+//                                 const __half* B,
+//                                 __half* C,
+//                                 cublasOperation_t op_A,
+//                                 cublasOperation_t op_B,
+//                                 int stride_A,
+//                                 int stride_B,
+//                                 int stride_C,
+//                                 int batch,
+//                                 cublasGemmAlgo_t algo)
+// {
+//     cublasStatus_t status = cublasGemmStridedBatchedEx(handle,
+//                                                        op_A,
+//                                                        op_B,
+//                                                        m,
+//                                                        n,
+//                                                        k,
+//                                                        alpha,
+//                                                        A,
+//                                                        CUDA_R_16F,
+//                                                        (op_A == CUBLAS_OP_N) ? m : k,
+//                                                        stride_A,
+//                                                        B,
+//                                                        CUDA_R_16F,
+//                                                        (op_B == CUBLAS_OP_N) ? k : n,
+//                                                        stride_B,
+//                                                        beta,
+//                                                        C,
+//                                                        CUDA_R_16F,
+//                                                        m,
+//                                                        stride_C,
+//                                                        batch,
+//                                                        CUDA_R_32F,
+//                                                        algo);
 
-    if (status != CUBLAS_STATUS_SUCCESS) {
-        fprintf(stderr, "!!!! kernel execution error. (m: %d, n: %d, k: %d, error: %d) \n", m, n, k, (int)status);
-        return EXIT_FAILURE;
-    }
+//     if (status != CUBLAS_STATUS_SUCCESS) {
+//         fprintf(stderr, "!!!! kernel execution error. (m: %d, n: %d, k: %d, error: %d) \n", m, n, k, (int)status);
+//         return EXIT_FAILURE;
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
 
 template <typename T>
 int cublas_fine_gemm_ex(const T* input_ptr,
@@ -497,9 +527,18 @@ public:
                   Buffer<T>* weights_grad,
                   Buffer<T>* bias_grad,
                   ScheduleEngine* SE,
-                  Buffer<T>* inp_grad_out = nullptr)
+                  Buffer<T>* inp_grad_out = nullptr,
+                  bool sync = true)
     {
         float alpha = (T)1.0, beta = (T)0.0;
+
+        out_grad->copyH2D(SE->compute);
+        input_ptr->copyH2D(SE->compute);
+        weights->copyH2D(SE->compute);
+        weights_grad->copyH2D(SE->compute);
+        bias_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
+
         cublas_gemm_ex(SE->handle,
                        CUBLAS_OP_N,
                        CUBLAS_OP_T,
@@ -527,6 +566,12 @@ public:
                        cublasGemmAlgo_t(config_.gemm_algos[2]));
 
         launch_fuse_transpose_bias_kernel(out_grad->get_device_data(), bias_grad->get_device_data(), bsz, config_.outputSize, SE->getStream(0));
+        
+        out_grad->copyD2H(SE->compute);
+        inp_grad_out ->copyD2H(SE->compute);   
+
+        if ( sync == true )
+           CHECK(cudaDeviceSynchronize());             
     }
 
     void BackwardFineGrained(int bsz,
@@ -542,9 +587,11 @@ public:
     {
         float alpha = (T)1.0, beta = (T)0.0;
 
+        out_grad->copyH2D(SE->compute);
+        bias_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
         weights->copyH2D(SE->compute);
         weights_grad->copyH2D(SE->compute);
-        bias_grad->copyH2D(SE->compute);
 
         int offset = 0;
         int offset_size = bsz * config_.inputSize / nq;
@@ -557,8 +604,11 @@ public:
 
         for (int i = 0; i < nq; i++)
         {
-            offset = i * offset_size;   
+            offset = i * offset_size;
+
             input_ptr->copyH2D(SE->compute, offset, nq, i);
+            // weights->copyH2D(SE->compute, offset, nq, i);
+            // weights_grad->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
                 std::cout << "\x1b[31;1mqueue index=" << i << "\x1b[0m" << std::endl;
@@ -577,8 +627,8 @@ public:
                        &alpha,
                        &beta,
                        input_ptr->get_device_data(offset),
-                       out_grad->get_device_data(3*offset),
-                       weights_grad->get_device_data(),
+                       out_grad->get_device_data(),
+                       weights_grad->get_device_data(offset),
                        cublasGemmAlgo_t(config_.gemm_algos[1]));
 
             cublas_gemm_ex(SE->handle,
@@ -589,18 +639,23 @@ public:
                        config_.outputSize,
                        &alpha,
                        &beta,
-                       weights->get_device_data(),
-                       out_grad->get_device_data(3*offset),
-                       inp_grad_out->get_device_data(offset),
+                       weights->get_device_data(offset),
+                       out_grad->get_device_data(),
+                       inp_grad_out->get_device_data(),
                        cublasGemmAlgo_t(config_.gemm_algos[2]));
 
             launch_fuse_transpose_bias_kernel(out_grad->get_device_data(), bias_grad->get_device_data(), bsz, config_.outputSize, SE->getStream(0));
 
-            out_grad->copyD2H(SE->compute, offset, nq, i);      
+//            weights_grad->copyD2H(SE->compute, offset, nq, i);
+
+            inp_grad_out ->copyD2H(SE->compute, offset, nq, i);          
         }
 
-        if ( sync == true )
-            CHECK(cudaThreadSynchronize());        
+        weights_grad->copyD2H(SE->compute);
+        bias_grad->copyD2H(SE->compute);
+
+       if ( sync == true )
+           CHECK(cudaDeviceSynchronize());
     }
 
     private:

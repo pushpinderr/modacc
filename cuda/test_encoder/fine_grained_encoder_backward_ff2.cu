@@ -21,16 +21,13 @@ int main(int argc, char* argv[]) {
     bool _pre_or_postLayerNorm = false;
 
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
-
-    if(print_info){
-        std::cout << "################################################################" << std::endl;
-        std::cout << "batch size=" << batch_size << std::endl;
-        std::cout << "sequence length=" << sequence_length << std::endl;
-        std::cout << "hidden layer size=" << hidden_size << std::endl;
-        std::cout << "intermediate size=" << intermediate_size << std::endl;
-        std::cout << "number of queues=" << nq << std::endl;
-        std::cout << "################################################################" << std::endl;
-    }
+    std::cout << "################################################################" << std::endl;
+    std::cout << "batch size=" << batch_size << std::endl;
+    std::cout << "sequence length=" << sequence_length << std::endl;
+    std::cout << "hidden layer size=" << hidden_size << std::endl;
+    std::cout << "intermediate size=" << intermediate_size << std::endl;
+    std::cout << "number of queues=" << nq << std::endl;
+    std::cout << "################################################################" << std::endl;
 
     Stopwatch sw, sw1;
     ScheduleEngine SE(8);
@@ -69,7 +66,7 @@ int main(int argc, char* argv[]) {
                     &ff2_buf,
                     true);
     sw.stop();
-    printf("_ff2.Backward(): %f\n", sw.GetTimeInSeconds());
+    printf("_ff2.BackwardFineGrained(): %f\n", sw.GetTimeInSeconds());
 
     return 0;
 }

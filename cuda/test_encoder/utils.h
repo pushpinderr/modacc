@@ -151,7 +151,7 @@ class Buffer {
 
     void init_ones() {
         for (int i = 0; i < num_elements; i++)
-            _host_data[i] = 1;
+            _host_data[i] = 1.23456;
     }
 
     void from(std::string fname) {

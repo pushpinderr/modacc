@@ -44,18 +44,19 @@ int main(int argc, char* argv[]) {
     int print_info=0; 
     bool sync = true;
     float layernorm_eps=0.000001; 
+
     std::array <int, 3> gemm_algos = {CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT, CUBLAS_GEMM_DEFAULT};
-   if(print_info){
-    std::cout << "################################################################" << std::endl;
-    std::cout << "batch size=" << batch_size << std::endl;
-    std::cout << "sequence length=" << sequence_length << std::endl;
-    std::cout << "hidden layer size=" << hidden_size << std::endl;
-    std::cout << "intermediate size=" << intermediate_size << std::endl;
-    std::cout << "number of heads=" << nh << std::endl;
-    std::cout << "number of queues=" << nq << std::endl;
-    std::cout << "sync flag=" << sync << std::endl;
-    std::cout << "################################################################" << std::endl;
-    }
+
+    std::cout << "+----------------------------------------------------------+" << std::endl;
+    std::cout << "|  Batch Size         :   "<< batch_size <<"                                |"<< std::endl;
+    std::cout << "|  Sequence Length    :   "<< sequence_length<<"                              |"<< std::endl;
+    std::cout << "|  Hidden Layer Size  :   "<< hidden_size <<"                              |"<< std::endl;
+    std::cout << "|  Intermediate Size  :   "<< intermediate_size <<"                              |"<< std::endl;
+    std::cout << "|  Number of Heads    :   "<< nh <<"                                |"<< std::endl;
+    std::cout << "|  Number of Queues   :   "<< nq <<"                                |"<<std::endl;
+    std::cout << "|  Sync Flag          :   "<< sync <<"                                |"<<std::endl;
+    std::cout << "+----------------------------------------------------------+" << std::endl;
+
     Stopwatch sw;
     ScheduleEngine SE(8);
 
@@ -157,7 +158,6 @@ int main(int argc, char* argv[]) {
     _layer_norm.SetMeansAndVariance(&norm_mean, &norm_var);
     _attn_layer_norm.SetMeansAndVariance(&attn_norm_mean, &attn_norm_var);
 
-    //printf("\x1b[31;1mExecuting layer norm\x1b[0m\n");
     sw.start();
     _layer_norm.ForwardCheckpoint(bsz, 
                                  &input_norm, 
@@ -166,10 +166,10 @@ int main(int argc, char* argv[]) {
                                  &norm_bias, 
                                  &SE, 
                                  sync);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("layer_norm:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mExecuting qkv_linear\x1b[0m\n");
     sw.restart();
     _qkv_linear.ForwardCheckpointPartition(bsz,
                                            &input_norm,
@@ -178,110 +178,103 @@ int main(int argc, char* argv[]) {
                                            &SE,
                                            nq,
                                            sync);
+    CHECK(cudaDeviceSynchronize());                                           
     sw.stop();
     printf("qkv_linear:%f\n", sw.GetTimeInSeconds());
     
-    //printf("\x1b[31;1mExecuting launch_bias_add_transform_0213\x1b[0m\n");
     sw.restart();
     launch_bias_add_transform_0213<float>(queries.get_device_data(), 
                                           qkv_out.get_device_data(), 
                                           qkv_bias.get_device_data(), 
                                           batch_size, 
                                           sequence_length, 
-                                          hidden_size, 
+                                           hidden_size, 
                                           nh, 
                                           SE.getStream(0), 
                                           3);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("launch_bias_add_transform_0213:%f\n", sw.GetTimeInSeconds());
     
-    //printf("\x1b[31;1mCalculating attention scores\x1b[0m\n");
     sw.restart();
     _attn_scores.Forward(bsz_heads, &soft_out, &keys, &queries, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_scores:%f\n", sw.GetTimeInSeconds());
     
-    //printf("\x1b[31;1mExecuting softmax\x1b[0m\n");
     sw.restart();
     _softmax.ForwardCheckpoint(batch_size, &soft_out, &input_mask, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("softmax:%f\n", sw.GetTimeInSeconds());
 
     _attn_prob_dropout.SetMask(&attn_prob_dropout_mask);
-    //printf("\x1b[31;1mExecuting attention probability dropout\x1b[0m\n");
     sw.restart();
     _attn_prob_dropout.Forward(bsz_heads * sequence_length, &context, &soft_out, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_probability_dropout:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mCalculating attention context\x1b[0m\n");
     sw.restart();
     _attn_context.Forward(bsz_heads, &buf_1, &values, &context, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_context:%f\n", sw.GetTimeInSeconds());
     
     sw.restart();
-    launch_transform4d_0213<float>(attn_o_inp.get_device_data(), 
-                                   buf_1.get_device_data(), 
+    launch_transform4d_0213<float>(&attn_o_inp, 
+                                   &buf_1, 
                                    batch_size, 
                                    nh, 
                                    sequence_length, 
                                    hidden_size, 
-                                   SE.getStream(0), 
+                                   &SE, 
                                    1); 
-                                  
+    CHECK(cudaDeviceSynchronize());                                  
     sw.stop();
     printf("launch_transform4d_0213:%f\n",sw.GetTimeInSeconds());
-    //printf("\x1b[31;1mExecuting attention out\x1b[0m\n");
+
     sw.restart();
     _attn_out_linear.ForwardCheckpoint(bsz_seq, &attn_o_inp, &attn_ow, &buf_1, &SE, true);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_out_linear:%f\n", sw.GetTimeInSeconds());
     
     _attn_output_dropout.SetMask(&attn_output_dropout_mask);
-    //printf("\x1b[31;1mExecuting attention output dropout\x1b[0m\n");
     sw.restart();
     _attn_output_dropout.ForwardWithBias(bsz_seq, &add_res, &buf_1, &input, &attn_ob, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_output_dropout:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mExecuting attention layer norm\x1b[0m\n");
     sw.restart();
     _attn_layer_norm.ForwardCheckpoint(bsz_seq, &ff1_inp, &add_res, &attn_nw, &attn_nb, &SE, true);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("attention_layer_norm:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mExecuting 1st feed forward layer\x1b[0m\n");
     sw.restart();
     _ff1.ForwardCheckpoint(bsz_seq, &ff1_inp, &inter_w, &ff2_inp, &SE, true);
+    CHECK(cudaDeviceSynchronize());    
     sw.stop();
     printf("1st_feed_forward_layer:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mExecuting gelu\x1b[0m\n");
     sw.restart();
     _gelu.ForwardWithBiasAdd(bsz_seq, &ff2_inp, &inter_b, &context, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("gelu:%f\n", sw.GetTimeInSeconds());
 
-    //printf("\x1b[31;1mExecuting 2nd feed forward layer\x1b[0m\n");
     sw.restart();
     _ff2.ForwardCheckpoint(bsz_seq, &context, &output_w, &out, &SE, true);
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("2nd_feed_forward_layer:%f\n", sw.GetTimeInSeconds());
 
     _layer_output_dropout.SetMask(&layer_output_dropout_mask);
-    //printf("\x1b[31;1mExecuting layer output dropout\x1b[0m\n");
     sw.restart();
     _layer_output_dropout.ForwardWithBias(bsz_seq, &out, &out, &add_res, &output_b, &SE);
-    CHECK(cudaThreadSynchronize());
+    CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("layer_output_dropout:%f\n", sw.GetTimeInSeconds());
     

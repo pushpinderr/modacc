@@ -602,16 +602,41 @@ public:
                 Buffer<T>* soft_out,
                 ScheduleEngine * SE)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        out_grad->copyH2D(SE->compute);
+        soft_out->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_attn_softmax_backward_v2<T>(out_grad->get_device_data(),
                                         soft_out->get_device_data(),
                                         bsz,
                                         config_.heads,
                                         config_.seq_length,
                                         SE->getStream(0));
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                                        
+
+        out_grad->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif        
     }
-
-
-
 
     inline size_t GetProbDepth() const { return config_.prob_depth; }
 

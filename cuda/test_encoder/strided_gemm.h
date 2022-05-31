@@ -70,10 +70,12 @@ public:
         int stride_a = _config.m * _config.k;
         int stride_b = _config.n * _config.k;
         int stride_c = _config.m * _config.n;
-#if EVENT_PROFILE
-        Stopwatch sw;
-        sw.restart();
-#endif
+
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+        
         cublas_strided_batched_gemm(SE->handle,
                                     _config.m,
                                     _config.n,
@@ -90,12 +92,12 @@ public:
                                     stride_c,
                                     bsz,
                                     cublasGemmAlgo_t(_config.gemm_algos[0]));
-#if EVENT_PROFILE
-        sw.stop();
-        printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
-        sw.restart();
-#endif    
-}
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif    
+    }
 
     void Backward(int bsz,
                   Buffer<T>* d_output,
@@ -115,6 +117,23 @@ public:
         // B need to transpose.
         cublasOperation_t op_b = (_config.op_B == CUBLAS_OP_T ? CUBLAS_OP_N : CUBLAS_OP_T);
 
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        d_output->copyH2D(SE->compute);
+        _buffer_a->copyH2D(SE->compute);
+        _buffer_b->copyH2D(SE->compute);
+        inpGradA->copyH2D(SE->compute);
+        inpGradB->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         // Calculate d_A.
         cublas_strided_batched_gemm(SE->handle,
                                     mb,
@@ -132,6 +151,12 @@ public:
                                     stride_c,
                                     bsz,
                                     cublasGemmAlgo_t(_config.gemm_algos[1]));
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
 
         // A need to transpose.
         cublasOperation_t op_a = (_config.op_A == CUBLAS_OP_T ? CUBLAS_OP_N : CUBLAS_OP_T);
@@ -157,8 +182,22 @@ public:
                                     stride_c,
                                     bsz,
                                     cublasGemmAlgo_t(_config.gemm_algos[2]));
-    }
 
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
+        inpGradA->copyD2H(SE->compute);                                    
+        inpGradB->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                                      
+    }
 
     /* void ForwardPlusSave(T* output, const T* _buffer_a, const T* _buffer_b, cublasHandle_t handle)
     {

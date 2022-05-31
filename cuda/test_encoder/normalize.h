@@ -638,6 +638,11 @@ __global__ void LayerNormBackward2(const float* out_grad,
     iterations = row_stride / iteration_stride;
     for (int i = 0; i < iterations; i++) inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
     if ((high_index) < row_stride) inp_grad[high_index] = (vals_arr[iterations] - sum);
+
+    for (int i = 0; i < iterations; i++)
+        printf("%f ", inp_grad[i]);
+
+    printf("\n");
 }
 
 __global__ void LayerNormBackward2_fused_add(const float* out_grad1,
@@ -1119,6 +1124,17 @@ public:
         residual->copyD2H(SE->compute);
         // gamma->copyD2H(SE->compute);
         // betta->copyD2H(SE->compute);
+
+        printf("Pushpinder -> vals host data: %lf\n", vals->get_host_data());
+        printf("Pushpinder -> vals device data: %lf\n", vals->get_device_data());
+        printf("Pushpinder -> vals no of elements: %lf\n", vals->get_num_elements());
+        printf("Pushpinder -> vals size: %lf\n\n", vals->get_size());
+
+        printf("Pushpinder -> residual host data: %lf\n", residual->get_host_data());
+        printf("Pushpinder -> residual device data: %lf\n", residual->get_device_data());
+        printf("Pushpinder -> residual no of elements: %lf\n", residual->get_num_elements());
+        printf("Pushpinder -> residual size: %lf\n\n", residual->get_size());
+                
         if ( sync )
             CHECK(cudaThreadSynchronize());
 #if EVENT_PROFILE
@@ -1126,6 +1142,7 @@ public:
         printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
         sw.restart();
 #endif
+
 
     }
 
@@ -1153,7 +1170,7 @@ public:
         Stopwatch sw;
         sw.start();
         // std::cout << "start profiling" << std::endl;
-        for (int i = 0; i<nq; i++)
+        for (int i = 0; i < nq; i++)
         {
             offset = i * partition_size * sequence_length * hidden_size; 
             
@@ -1196,8 +1213,27 @@ public:
                   Buffer<T>* betta_grad,
                   ScheduleEngine* SE,
                   Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_in = nullptr)
+                  Buffer<T>* norm_in = nullptr,
+                  bool sync = true)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        out_grad->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute); 
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
+        norm_in->copyH2D(SE->compute);
+        
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_layerNorm_backward(out_grad->get_device_data(),
                                   norm_in->get_device_data(),
                                   vars->get_device_data(),
@@ -1209,6 +1245,63 @@ public:
                                   bsz,
                                   config_.hiddenDim,
                                   SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
+//        out_grad->copyD2H(SE->compute);
+        gamma_grad->copyD2H(SE->compute);
+        betta_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);
+
+        if ( sync == true )
+           CHECK(cudaDeviceSynchronize());
+
+        // #if EVENT_PROFILE
+        //     float *host_inp_grad_out = inp_grad_out->get_device_data();
+           
+        //     for(int i = 0; i < inp_grad_out->get_num_elements(); i++) {
+        //         printf("%f ", host_inp_grad_out[i]);
+        //         // if(host_inp_grad_out[i] == 1.2345)
+        //         //     c++;
+        //     }
+            
+        //     printf("\n");
+        // #endif
+
+        // #if EVENT_PROFILE
+        //     float *host_inp_grad_out = inp_grad_out->get_host_data();
+        //     float *host_out_grad = inp_grad_out->get_host_data();
+           
+        //     for(int i = 0; i < inp_grad_out->get_size(); i++) {
+        //         printf("%d", host_inp_grad_out[i]);
+        //     }
+            
+        //     // printf("/n");
+
+        //     // for(int i = 0; i < out_grad->get_size(); i++) {
+        //     //     printf("%d", out_grad[i]);
+        //     // }                         
+        // #endif
+
+        // printf("Pushpinder -> inp_grad_out host data: %lu\n", inp_grad_out->get_host_data());
+        // printf("Pushpinder -> inp_grad_out device data: %lu\n", inp_grad_out->get_device_data());
+        // printf("Pushpinder -> inp_grad_out no of elements: %lld\n", inp_grad_out->get_num_elements());
+        // printf("Pushpinder -> inp_grad_out size: %lld\n\n", inp_grad_out->get_size());
+
+        // printf("Pushpinder -> out_grad host data: %lu\n", out_grad->get_host_data());
+        // printf("Pushpinder -> out_grad device data: %lu\n", out_grad->get_device_data());
+        // printf("Pushpinder -> out_grad no of elements: %lld\n", out_grad->get_num_elements());
+        // printf("Pushpinder -> out_grad size: %lld \n\n\n\n", out_grad->get_size());
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                                               
     }
 
     void Backward(int bsz,
@@ -1219,8 +1312,28 @@ public:
                   Buffer<T>* betta_grad,
                   ScheduleEngine* SE,
                   Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_out)
+                  Buffer<T>* norm_out,
+                  bool sync = true)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        out_grad->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute); 
+        betta->copyH2D(SE->compute);
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute); 
+        norm_out->copyH2D(SE->compute); 
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_layerNorm_backward(out_grad->get_device_data(),
                                   norm_out->get_device_data(),
                                   vars->get_device_data(),
@@ -1233,6 +1346,25 @@ public:
                                   SE->compute,
                                   !config_.useMean,
                                   betta->get_device_data());
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
+        out_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);
+        norm_out->copyD2H(SE->compute);
+
+        if ( sync == true )
+           CHECK(cudaDeviceSynchronize());
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif           
     }    
 
     void BackwardFusedAdd(int bsz,
@@ -1245,6 +1377,24 @@ public:
                           Buffer<T>* inp_grad_out,
                           Buffer<T>* norm_in = nullptr)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        out_grad1->copyH2D(SE->compute);
+        out_grad2->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute);
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif      
+
         launch_layerNorm_backward_fused_add(out_grad1->get_device_data(),
                                             out_grad2->get_device_data(),
                                             norm_in->get_device_data(),
@@ -1257,6 +1407,22 @@ public:
                                             bsz,
                                             config_.hiddenDim,
                                             SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif      
+
+        gamma_grad->copyD2H(SE->compute);
+        betta_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif              
     }
 
     void BackwardFusedAdd(int bsz,
@@ -1270,6 +1436,25 @@ public:
                           Buffer<T>* inp_grad_out,
                           Buffer<T>* norm_out)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        out_grad1->copyH2D(SE->compute);
+        out_grad2->copyH2D(SE->compute);
+        gamma->copyH2D(SE->compute);
+        betta->copyH2D(SE->compute);
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif     
+
         launch_layerNorm_backward_fused_add(out_grad1->get_device_data(),
                                             out_grad2->get_device_data(),
                                             norm_out->get_device_data(),
@@ -1283,6 +1468,22 @@ public:
                                             SE->compute,
                                             !config_.useMean,
                                             betta->get_device_data());
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif     
+
+        gamma_grad->copyD2H(SE->compute);
+        betta_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);  
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                                                       
     }
 
     void BackwardFineGrained(int bsz,
@@ -1299,26 +1500,20 @@ public:
         uint32_t batch_size = config_.batchSize; 
         uint32_t sequence_length = config_.seqLength; 
         uint32_t hidden_size = config_.hiddenDim;
-        std::cout << "BackwardFineGrained\n";
         int offset = 0;
         int partition_size = (batch_size / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
         
-        gamma->copyH2D(SE->compute);
-        betta_grad->copyH2D(SE->compute);   
-        std::cout << "creating queues" << std::endl;
+        gamma->copyH2D(SE->compute); 
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
 
-        Stopwatch sw;
-        sw.start();
+        for (int i = 0; i < nq; i++) {
+            offset = i * partition_size * sequence_length * hidden_size;
 
-        for (int i = 0; i<nq; i++) {
-            offset = i * partition_size * sequence_length * hidden_size; 
-            
             out_grad->copyH2D(SE->compute, offset, nq, i);
-            gamma_grad->copyH2D(SE->compute, offset, nq, i);
-            inp_grad_out->copyH2D(SE->compute, offset, nq, i);
             norm_in->copyH2D(SE->compute, offset, nq, i);
-
+        
             #if DEBUG
                 std::cout << "queue_index=" << i << ", offset=" << offset; 
                 std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
@@ -1334,18 +1529,22 @@ public:
                                   vars->get_device_data(),
                                   means->get_device_data(),
                                   gamma->get_device_data(),
-                                  gamma_grad->get_device_data(offset),
+                                  gamma_grad->get_device_data(),
                                   betta_grad->get_device_data(),
-                                  inp_grad_out->get_device_data(offset),
+                                  inp_grad_out->get_device_data(),
                                   bsz,
                                   config_.hiddenDim,
                                   SE->compute);
-
-            out_grad->copyD2H(SE->compute, offset, nq, i);            
+    
+            // out_grad->copyD2H(SE->compute, offset, nq, i);
         }
+        
+        gamma_grad->copyD2H(SE->compute);
+        betta_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);
 
         if ( sync == true )
-            CHECK(cudaThreadSynchronize());            
+           CHECK(cudaDeviceSynchronize());              
     }
 
     void BackwardFineGrained(int bsz,
@@ -1357,38 +1556,36 @@ public:
                   Buffer<T>* betta_grad,
                   ScheduleEngine* SE,
                   Buffer<T>* inp_grad_out,
-                  Buffer<T>* norm_out)
+                  Buffer<T>* norm_out,
+                  bool sync = true)
     {
         uint32_t batch_size = config_.batchSize; 
         uint32_t sequence_length = config_.seqLength; 
         uint32_t hidden_size = config_.hiddenDim;
-        std::cout << "BackwardFineGrained\n";
         int offset = 0;
         int partition_size = (batch_size / nq);
-        std::cout << "partition_size=" << partition_size<< std::endl;
         
         gamma->copyH2D(SE->compute);
-        betta->copyH2D(SE->compute);   
-        std::cout << "creating queues" << std::endl;
+        betta->copyH2D(SE->compute);
+        gamma_grad->copyH2D(SE->compute);
+        betta_grad->copyH2D(SE->compute);
+        inp_grad_out->copyH2D(SE->compute);
 
         Stopwatch sw;
         sw.start();
 
-        for (int i = 0; i<nq; i++) {
+        for (int i = 0; i < nq; i++) {
             offset = i * partition_size * sequence_length * hidden_size; 
             
             out_grad->copyH2D(SE->compute, offset, nq, i);
-            gamma_grad->copyH2D(SE->compute, offset, nq, i);
-            betta_grad->copyH2D(SE->compute, offset, nq, i);
-            inp_grad_out->copyH2D(SE->compute, offset, nq, i);
             norm_out->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
-                std::cout << "queue_index=" << i << ", offset=" << offset; 
-                std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
-                std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
-                std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
-                std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
+                // std::cout << "queue_index=" << i << ", offset=" << offset; 
+                // std::cout << "\x1b[31;1m, vals=" << vals->get_device_data(offset); 
+                // std::cout << "\x1b[32;1m, residual=" << residual->get_device_data(offset);
+                // std::cout << "\x1b[33;1m, gamma=" << gamma->get_device_data();
+                // std::cout << "\x1b[34;1m, betta=" << betta->get_device_data() << "\x1b[0m;" << std::endl;
             #endif
             
             cublasSetStream(SE->handle, SE->compute[i]);
@@ -1397,17 +1594,28 @@ public:
                                   norm_out->get_device_data(offset),
                                   vars->get_device_data(),
                                   gamma->get_device_data(),
-                                  gamma_grad->get_device_data(offset),
-                                  betta_grad->get_device_data(offset),
-                                  inp_grad_out->get_device_data(offset),
+                                  gamma_grad->get_device_data(),
+                                  betta_grad->get_device_data(),
+                                  inp_grad_out->get_device_data(),
                                   bsz,
                                   config_.hiddenDim,
                                   SE->compute,
                                   !config_.useMean,
-                                  betta->get_device_data());
-                                  
-            out_grad->copyD2H(SE->compute, offset, nq, i);        
+                                  betta->get_device_data());          
         }
+
+        betta_grad->copyD2H(SE->compute);
+        inp_grad_out->copyD2H(SE->compute);
+
+        float* h = betta_grad->get_host_data();
+        
+        printf("Pushpinder -> host data: %lf\n", betta_grad->get_host_data());
+        printf("Pushpinder -> device data: %lf\n", betta_grad->get_device_data());
+        printf("Pushpinder -> no of elements: %lf\n", betta_grad->get_num_elements());
+        printf("Pushpinder -> size: %lf\n", betta_grad->get_size());
+
+        if ( sync == true )
+           CHECK(cudaDeviceSynchronize());  
     }        
 
     inline bool UseMean() const { return config_.useMean; }

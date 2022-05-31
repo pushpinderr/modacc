@@ -283,6 +283,16 @@ public:
             sw.restart();
         #endif
 
+        input_buf->copyH2D(SE->compute);
+        bias->copyH2D(SE->compute);
+        output->copyH2D(SE->compute);  
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time:%lf\n",sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_bias_gelu<T>(input_buf->get_device_data(), 
                             bias->get_device_data(), 
                             output->get_device_data(), 
@@ -295,6 +305,13 @@ public:
             printf("Kernel Time:%lf\n",sw.GetTimeInSeconds());
             sw.restart();
         #endif
+
+        output->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time:%lf\n",sw.GetTimeInSeconds());
+        #endif        
     }
 
     void Backward(int bsz,
@@ -303,12 +320,40 @@ public:
                 Buffer <T>* bias,
                 ScheduleEngine* SE)
     {
+        #if EVENT_PROFILE
+            Stopwatch sw;
+            sw.restart();
+        #endif
+
+        d_output->copyH2D(SE->compute);
+        input_buf->copyH2D(SE->compute);
+        bias->copyH2D(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("H2D Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif
+
         launch_d_gelu<T>(d_output->get_device_data(),
                         input_buf->get_device_data(),
                         bias->get_device_data(),
                         _config.intermediate_size,
                         bsz,
                         SE->getStream(0));
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("Kernel Time: %lf\n", sw.GetTimeInSeconds());
+            sw.restart();
+        #endif                        
+                        
+        d_output->copyD2H(SE->compute);
+
+        #if EVENT_PROFILE
+            sw.stop();
+            printf("D2H Time: %lf\n", sw.GetTimeInSeconds());
+        #endif               
     }
 
     void BackwardFineGrained(int bsz,
