@@ -1050,8 +1050,6 @@ public:
 
         d_vals->copyH2D(SE->compute);
         
-        // mask->copyH2D(SE->compute);
-
         for (int i = 0; i < nq; i++) {
             offset = i * partition_size;
           

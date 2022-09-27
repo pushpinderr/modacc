@@ -151,7 +151,7 @@ class Buffer {
 
     void init_ones() {
         for (int i = 0; i < num_elements; i++)
-            _host_data[i] = 1.23456;
+            _host_data[i] = 9.0;
     }
 
     void from(std::string fname) {
@@ -214,13 +214,15 @@ class Buffer {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
       CHECK(cudaMemcpyAsync(h, d, get_size(),cudaMemcpyDeviceToHost, q[0]));
+    //   CHECK(cudaMemcpy(h, d, get_size(),cudaMemcpyDeviceToHost, q[0]));
     }
 
     void copyH2D(cudaStream_t *q, int offset=0)
     {
       T *h = get_host_data(offset);
       T *d = get_device_data(offset);
-      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0]));
+      CHECK(cudaMemcpyAsync(d, h, get_size(), cudaMemcpyHostToDevice, q[0])); 
+    //   CHECK(cudaMemcpy(d, h, get_size(), cudaMemcpyHostToDevice));
     }
 
     void copyD2H(cudaStream_t *q, int offset, int nq, int q_index)

@@ -1,0 +1,9 @@
++----------------------------------------------------------+
+|  Batch Size         :   4                                |
+|  Sequence Length    :   128                              |
+|  Hidden Layer Size  :   256                              |
+|  Intermediate Size  :   256                              |
+|  Number of Heads    :   4                                |
+|  Number of Queues   :   24                                |
+|  Sync Flag          :   1                                |
++----------------------------------------------------------+

@@ -1,0 +1,188 @@
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+Creating host data
+Creating device data
+Initializing host data
+Finished creating Buffer
+H2D Time:0.000079
+queue_index=0[41;1mlbrf<<<>>>[0m[31;1m, vals=0x7f159aea0600[32;1m, residual=0x7f159ae20600[33;1m, gamma=0x7f159af20600[34;1m, betta=0x7f159af20a00[0m;
+Kernel Time:0.000633
+D2H Time:0.000108
+layer_norm:0.000842
+offset_size=65536
+input volume=131072
+output volume=393216
+[31;1mqueue index=0[0m
+input offset=0
+output offset=0
+[31;1mqueue index=1[0m
+input offset=65536
+output offset=196608
+qkv_linear:0.124846
+Kernel Time:0.000007
+launch_bias_add_transform_0213:0.000029
+Kernel Time:0.000036
+attention_scores:0.000063
+H2D Time:0.000006
+Kernel Time:0.000035
+D2H Time:0.000003
+softmax:0.000545
+Kernel Time:0.000013
+attention_probability_dropout:0.000032
+Kernel Time:0.000006
+attention_context:0.000051
+Kernel Time:0.000004
+launch_transform4d_0213:0.000004
+H2D Time:0.000007
+Kernel Time:0.000115
+D2H Time:0.000003
+attention_out_linear:0.000126
+Kernel Time:0.000014
+attention_output_dropout:0.000052
+H2D Time:0.000010
+queue_index=0[41;1mlbrf<<<>>>[0m[31;1m, vals=0x7f1599200000[32;1m, residual=0x7f1599100000[33;1m, gamma=0x7f159afe2e00[34;1m, betta=0x7f159afe3200[0m;
+Kernel Time:0.000010
+D2H Time:0.000174
+attention_layer_norm:0.000197
+H2D Time:0.000005
+Kernel Time:0.000179
+D2H Time:0.000003
+1st_feed_forward_layer:0.000187
+Kernel Time:0.000004
+gelu:0.000176
+H2D Time:0.000004
+Kernel Time:0.000309
+D2H Time:0.000003
+2nd_feed_forward_layer:0.000318
+Kernel Time:0.000003
+layer_output_dropout:0.000049

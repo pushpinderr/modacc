@@ -1,0 +1,41 @@
+H2D Time:0.000047
+Kernel Time:0.000083
+D2H Time:0.000107
+layer_norm:0.000912
+qkv_linear:0.053722
+Kernel Time:0.000019
+launch_bias_add_transform_0213:0.000067
+Kernel Time:0.000049
+attention_scores:0.000074
+H2D Time:0.000006
+Kernel Time:0.000031
+D2H Time:0.000003
+softmax:0.000278
+Kernel Time:0.000013
+attention_probability_dropout:0.000026
+Kernel Time:0.000008
+attention_context:0.000039
+Kernel Time:0.000009
+launch_transform4d_0213:0.000151
+H2D Time:0.000005
+Kernel Time:0.040550
+D2H Time:0.000005
+attention_out_linear:0.040606
+Kernel Time:0.000012
+attention_output_dropout:0.000033
+H2D Time:0.000010
+Kernel Time:0.000005
+D2H Time:0.000181
+attention_layer_norm:0.000198
+H2D Time:0.000004
+Kernel Time:0.000097
+D2H Time:0.000003
+1st_feed_forward_layer:0.000150
+Kernel Time:0.000011
+gelu:0.000233
+H2D Time:0.000004
+Kernel Time:0.000136
+D2H Time:0.000002
+2nd_feed_forward_layer:0.000188
+Kernel Time:0.000003
+layer_output_dropout:0.000010

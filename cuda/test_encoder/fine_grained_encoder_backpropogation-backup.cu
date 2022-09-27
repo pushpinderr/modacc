@@ -114,12 +114,8 @@ int main(int argc, char* argv[]) {
     Buffer<float> inter_b(intermediate_size, &SE);
     
     Buffer<float> grad_output_ptr(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> grad_norm_w_ptr(hidden_size, &SE);
-    Buffer<float> grad_norm_w_ptr(batch_size * sequence_length * hidden_size, &SE);
-
-    // Buffer<float> grad_norm_b_ptr(hidden_size, &SE);
-    Buffer<float> grad_norm_b_ptr(batch_size * sequence_length * hidden_size, &SE);
-
+    Buffer<float> grad_norm_w_ptr(hidden_size, &SE);
+    Buffer<float> grad_norm_b_ptr(hidden_size, &SE);
     Buffer<float> output_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> ff1_inp_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> inter_w_ptr(hidden_size * intermediate_size, &SE);
@@ -133,16 +129,14 @@ int main(int argc, char* argv[]) {
     Buffer<float> add_res_ptr(batch_size * sequence_length * hidden_size, &SE);
 
     Buffer<float> attn_o_inp_ptr(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> attn_ow_ptr(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> grad_attn_ow_ptr(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> grad_attn_ob_ptr(batch_size * sequence_length * hidden_size, &SE);
+    Buffer<float> attn_ow_ptr(batch_size * hidden_size * hidden_size, &SE);
+    Buffer<float> grad_attn_ow_ptr(batch_size * hidden_size * hidden_size, &SE);
+    Buffer<float> grad_attn_ob_ptr(hidden_size, &SE);
 
-    // Buffer<float> soft_out_ptr(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
-    // Buffer<float> soft_out_ptr(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> soft_out_ptr(batch_size * sequence_length * hidden_size * nh, &SE);
+    Buffer<float> soft_out_ptr(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
+    //Buffer<float> soft_out_ptr(batch_size * sequence_length * sequence_length * nh, &SE);
    
-    Buffer<float> ctx_bufB_ptr(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> ctx_bufB_ptr(batch_size * sequence_length * sequence_length * nh, &SE);    
+    Buffer<float> ctx_bufB_ptr(batch_size * sequence_length * sequence_length * nh, &SE);
     Buffer<float> q_tf_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> k_tf_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> v_tf_ptr(batch_size * sequence_length * hidden_size, &SE);
@@ -152,51 +146,41 @@ int main(int argc, char* argv[]) {
     Buffer<float> input_ptr(batch_size * sequence_length * hidden_size, &SE);
     Buffer<float> attn_qkvw_ptr(3 * hidden_size * hidden_size, &SE);
     Buffer<float> grad_attn_qkvw_ptr(3 * hidden_size * hidden_size, &SE);
-    //Buffer<float> norm_w_ptr(hidden_size, &SE);
-    Buffer<float> norm_w_ptr(batch_size * sequence_length * hidden_size, &SE);
+    Buffer<float> norm_w_ptr(hidden_size, &SE);
 
-    // Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
 
-   Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size, &SE);
+//    Buffer<float> grad_input_ptr(batch_size * sequence_length * hidden_size, &SE);
     
-    // Buffer<float> norm_b_ptr(hidden_size, &SE);
-    Buffer<float> norm_b_ptr(batch_size * sequence_length * hidden_size, &SE);
+    Buffer<float> norm_b_ptr(hidden_size, &SE);
 
-    // Buffer<float> ff2_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
-    Buffer<float> ff2_inp_ptr(batch_size * sequence_length * hidden_size, &SE);
-
-    // Buffer<float> gelu_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
-    Buffer<float> gelu_inp_ptr(batch_size * sequence_length * hidden_size, &SE);    
+    Buffer<float> ff2_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
+    Buffer<float> gelu_inp_ptr(batch_size * sequence_length * intermediate_size, &SE);
     
-    Buffer<float> output_w_ptr(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> output_w_ptr(intermediate_size * hidden_size, &SE);
-
+    Buffer<float> output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_w_ptr(intermediate_size * hidden_size, &SE);
     Buffer<float> grad_output_b_ptr(hidden_size, &SE);
 
-    // Buffer<float> buf_0(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_0(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
 
-    Buffer<float> buf_0(batch_size * sequence_length * hidden_size, &SE);
-    Buffer<float> buf_1(batch_size * sequence_length * hidden_size, &SE);
+    //Buffer<float> buf_0(batch_size * sequence_length * hidden_size, &SE);
+    // Buffer<float> buf_1(batch_size * sequence_length * hidden_size, &SE);
 
-    // Buffer<float> buf_1(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_1(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
 
    //Buffer<float> buf_1(batch_size * sequence_length * hidden_size + bsz * sequence_length * hidden_size, &SE);
 
-   Buffer<float> buf_2(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> buf_2(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
-    Buffer<float> buf_3(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> buf_3(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size, &SE);
+ //   Buffer<float> buf_2(batch_size * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_2(batch_size * sequence_length * hidden_size + 2 * bsz * sequence_length * hidden_size, &SE);
+    Buffer<float> buf_3(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size, &SE);
 
     // Buffer<float> ff2_buf(batch_size * sequence_length * hidden_size, &SE);
 
     Buffer<float> ff2_buf(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
-    
-    Buffer<float> ctx_bufB_ptr_recomp(batch_size * sequence_length * hidden_size, &SE);
-    // Buffer<float> ctx_bufB_ptr_recomp(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size + (sequence_length * sequence_length * bsz * bsz_heads), &SE);
+    Buffer<float> ctx_bufB_ptr_recomp(batch_size * sequence_length * hidden_size + 3 * bsz * sequence_length * hidden_size + (sequence_length * sequence_length * bsz * bsz_heads), &SE);
 
-    // Buffer<uint8_t> attn_output_dropout_mask(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
-    Buffer<uint8_t> attn_output_dropout_mask(batch_size * sequence_length * hidden_size, &SE); 
+    Buffer<uint8_t> attn_output_dropout_mask(batch_size * sequence_length * hidden_size + 4 * bsz * sequence_length * hidden_size, &SE);
+    // Buffer<uint8_t> attn_output_dropout_mask(batch_size * sequence_length * hidden_size, &SE); 
 
     _layer_norm.SetMeansAndVariance(&norm_mean, &norm_var);
     _attn_layer_norm.SetMeansAndVariance(&attn_norm_mean, &attn_norm_var);
@@ -236,8 +220,7 @@ int main(int argc, char* argv[]) {
         sw.stop();
         printf("_layer_norm.BackwardFineGrained(): %f\n\n", sw.GetTimeInSeconds());
     }
-
-
+    
     sw.restart();
     if (_pre_or_postLayerNorm) {
         _layer_output_dropout.Backward(bsz_seq, &buf_0, &grad_output_ptr,  &attn_output_dropout_mask, &SE);
@@ -421,7 +404,8 @@ int main(int argc, char* argv[]) {
                                             nq, 
                                             &ff2_buf,
                                             &attn_output_dropout_mask, 
-                                            &SE);                                      
+                                            &SE);
+                                          
     CHECK(cudaDeviceSynchronize());
     sw.stop();
     printf("_attn_prob_dropout.Backward(): %f\n", sw.GetTimeInSeconds());

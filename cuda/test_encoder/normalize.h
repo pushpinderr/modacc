@@ -432,6 +432,7 @@ __global__ void LayerNormBackward1(const T* __restrict__ out_grad,
         s1 += g.shfl_down(s1, i);
         s2 += g.shfl_down(s2, i);
     }
+    
 
     if (threadIdx.x == 0) {
         betta_grad[pos] = s1;
@@ -450,6 +451,8 @@ __global__ void LayerNormBackward2(const float* out_grad,
     int iteration_stride = blockDim.x;
     int iterations = row_stride / iteration_stride;
 
+    //printf("row_stride: %d iterations: %d\n", row_stride, iterations);
+
     cg::thread_block b = cg::this_thread_block();
     cg::thread_block_tile<WARP_SIZE> g = cg::tiled_partition<WARP_SIZE>(b);
 
@@ -457,14 +460,21 @@ __global__ void LayerNormBackward2(const float* out_grad,
     int id = threadIdx.x;
     int wid = id / WARP_SIZE;
     int warp_num = (THREADS < row_stride ? THREADS : row_stride) / WARP_SIZE;
+
+    //printf("row: %d id: %d wid: %d warp_num: %d\n", row, id, wid, warp_num);
+
     __shared__ float partialSum[MAX_WARP_NUM];
 
     out_grad += (row * row_stride);
     X_vals += (row * row_stride);
     inp_grad += (row * row_stride);
 
+    //printf("out_grad: %d X_vals: %d inp_grad: %d\n", out_grad, X_vals, inp_grad);
+
     float vals_arr[NORM_REG];
     int high_index = iterations * iteration_stride + id;
+    // printf("high_index: %d iterations: %d iteration_stride: %d id: %d\n", high_index, iterations, iteration_stride, id);
+
 #pragma unroll
     for (int i = 0; i < iterations; i++) {
         float gamma_reg = gamma[i * iteration_stride + id];
@@ -480,6 +490,8 @@ __global__ void LayerNormBackward2(const float* out_grad,
 
     float var_reg = vars[row];
     float mean_reg = means[row];
+
+    // printf("var_reg: %f mean_reg: %f\n", var_reg, mean_reg);
 
     float sum = 0;
     float xu[NORM_REG];
@@ -530,8 +542,15 @@ __global__ void LayerNormBackward2(const float* out_grad,
     sum /= row_stride;
 
     iterations = row_stride / iteration_stride;
-    for (int i = 0; i < iterations; i++) inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
-    if ((high_index) < row_stride) inp_grad[high_index] = (vals_arr[iterations] - sum);
+    for (int i = 0; i < iterations; i++) {
+        inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
+        // printf("%f ", inp_grad[i * iteration_stride + id]);
+    }
+
+    if ((high_index) < row_stride) {
+        inp_grad[high_index] = (vals_arr[iterations] - sum);
+        // printf("%f ", inp_grad[high_index]);
+    }
 }
 
 /* Backward Normalize (Input-Gradient)
@@ -639,10 +658,10 @@ __global__ void LayerNormBackward2(const float* out_grad,
     for (int i = 0; i < iterations; i++) inp_grad[i * iteration_stride + id] = (vals_arr[i] - sum);
     if ((high_index) < row_stride) inp_grad[high_index] = (vals_arr[iterations] - sum);
 
-    for (int i = 0; i < iterations; i++)
-        printf("%f ", inp_grad[i]);
+    // for (int i = 0; i < iterations; i++)
+    //     printf("%f ", inp_grad[i]);
 
-    printf("\n");
+    // printf("\n");
 }
 
 __global__ void LayerNormBackward2_fused_add(const float* out_grad1,
@@ -1125,15 +1144,20 @@ public:
         // gamma->copyD2H(SE->compute);
         // betta->copyD2H(SE->compute);
 
-        printf("Pushpinder -> vals host data: %lf\n", vals->get_host_data());
-        printf("Pushpinder -> vals device data: %lf\n", vals->get_device_data());
-        printf("Pushpinder -> vals no of elements: %lf\n", vals->get_num_elements());
-        printf("Pushpinder -> vals size: %lf\n\n", vals->get_size());
+        printf("residual\n");
+        for(int i = 0; i < residual->get_num_elements(); i++) {
+            printf("%f ", residual->get_host_data()[i]);
+        }
 
-        printf("Pushpinder -> residual host data: %lf\n", residual->get_host_data());
-        printf("Pushpinder -> residual device data: %lf\n", residual->get_device_data());
-        printf("Pushpinder -> residual no of elements: %lf\n", residual->get_num_elements());
-        printf("Pushpinder -> residual size: %lf\n\n", residual->get_size());
+        // printf("Pushpinder -> vals host data: %lf\n", vals->get_host_data());
+        // printf("Pushpinder -> vals device data: %lf\n", vals->get_device_data());
+        // printf("Pushpinder -> vals no of elements: %lf\n", vals->get_num_elements());
+        // printf("Pushpinder -> vals size: %lf\n\n", vals->get_size());
+
+        // printf("Pushpinder -> residual host data: %lf\n", residual->get_host_data());
+        // printf("Pushpinder -> residual device data: %lf\n", residual->get_device_data());
+        // printf("Pushpinder -> residual no of elements: %lf\n", residual->get_num_elements());
+        // printf("Pushpinder -> residual size: %lf\n\n", residual->get_size());
                 
         if ( sync )
             CHECK(cudaThreadSynchronize());
@@ -1502,12 +1526,19 @@ public:
         uint32_t hidden_size = config_.hiddenDim;
         int offset = 0;
         int partition_size = (batch_size / nq);
+
+        printf("Gamma Before Ops\n");
+        for(int i = 0; i < gamma_grad->get_num_elements(); i++) {
+            printf("%f ", gamma_grad->get_device_data()[i]);
+        }
+
+        printf("\n\n");     
         
         gamma->copyH2D(SE->compute); 
         gamma_grad->copyH2D(SE->compute);
         betta_grad->copyH2D(SE->compute);
         inp_grad_out->copyH2D(SE->compute);
-
+       
         for (int i = 0; i < nq; i++) {
             offset = i * partition_size * sequence_length * hidden_size;
 
@@ -1544,7 +1575,17 @@ public:
         inp_grad_out->copyD2H(SE->compute);
 
         if ( sync == true )
-           CHECK(cudaDeviceSynchronize());              
+           CHECK(cudaDeviceSynchronize());
+
+        printf("Gamma\n");
+        for(int i = 0; i < gamma_grad->get_num_elements(); i++) {
+            printf("%f ", gamma_grad->get_host_data()[i]);
+        }
+
+        // printf("Betta\n");
+        // for(int i = 0; i < betta_grad->get_num_elements(); i++) {
+        //     printf("%f ", betta_grad->get_host_data()[i]);
+        // }
     }
 
     void BackwardFineGrained(int bsz,

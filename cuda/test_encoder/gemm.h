@@ -587,9 +587,9 @@ public:
     {
         float alpha = (T)1.0, beta = (T)0.0;
 
-        out_grad->copyH2D(SE->compute);
+        // out_grad->copyH2D(SE->compute);
         bias_grad->copyH2D(SE->compute);
-        inp_grad_out->copyH2D(SE->compute);
+        // inp_grad_out->copyH2D(SE->compute);
         weights->copyH2D(SE->compute);
         weights_grad->copyH2D(SE->compute);
 
@@ -606,9 +606,9 @@ public:
         {
             offset = i * offset_size;
 
+            out_grad->copyH2D(SE->compute, offset, nq, i);
             input_ptr->copyH2D(SE->compute, offset, nq, i);
-            // weights->copyH2D(SE->compute, offset, nq, i);
-            // weights_grad->copyH2D(SE->compute, offset, nq, i);
+            inp_grad_out->copyH2D(SE->compute, offset, nq, i);
 
             #if DEBUG
                 std::cout << "\x1b[31;1mqueue index=" << i << "\x1b[0m" << std::endl;
@@ -627,8 +627,8 @@ public:
                        &alpha,
                        &beta,
                        input_ptr->get_device_data(offset),
-                       out_grad->get_device_data(),
-                       weights_grad->get_device_data(offset),
+                       out_grad->get_device_data(offset),
+                       weights_grad->get_device_data(),
                        cublasGemmAlgo_t(config_.gemm_algos[1]));
 
             cublas_gemm_ex(SE->handle,
@@ -639,9 +639,9 @@ public:
                        config_.outputSize,
                        &alpha,
                        &beta,
-                       weights->get_device_data(offset),
+                       weights->get_device_data(),
                        out_grad->get_device_data(),
-                       inp_grad_out->get_device_data(),
+                       inp_grad_out->get_device_data(offset),
                        cublasGemmAlgo_t(config_.gemm_algos[2]));
 
             launch_fuse_transpose_bias_kernel(out_grad->get_device_data(), bias_grad->get_device_data(), bsz, config_.outputSize, SE->getStream(0));

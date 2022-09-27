@@ -1,0 +1,74 @@
++----------------------------------------------------------+
+|  Batch Size         :   4                                |
+|  Sequence Length    :   128                              |
+|  Hidden Layer Size  :   256                              |
+|  Intermediate Size  :   256                              |
+|  Number of Heads    :   4                                |
+|  Number of Queues   :   8                                |
+|  Sync Flag          :   1                                |
++----------------------------------------------------------+
+H2D Time:0.000048
+Kernel Time:0.000088
+Pushpinder -> vals host data: 0.000000
+Pushpinder -> vals device data: 0.000000
+Pushpinder -> vals no of elements: 0.000000
+Pushpinder -> vals size: 0.000000
+
+Pushpinder -> residual host data: 0.000000
+Pushpinder -> residual device data: 0.000000
+Pushpinder -> residual no of elements: 0.000000
+Pushpinder -> residual size: 0.000000
+
+D2H Time:0.000106
+layer_norm:0.000276
+qkv_linear:0.002395
+Kernel Time:0.000008
+launch_bias_add_transform_0213:0.000057
+Kernel Time:0.000040
+attention_scores:0.000066
+H2D Time:0.000006
+Kernel Time:0.000046
+D2H Time:0.000003
+softmax:0.000285
+Kernel Time:0.000012
+attention_probability_dropout:0.000026
+Kernel Time:0.000007
+attention_context:0.000040
+Kernel Time:0.000009
+launch_transform4d_0213:0.000164
+H2D Time:0.000004
+Kernel Time:0.000158
+D2H Time:0.000002
+attention_out_linear:0.000210
+Kernel Time: 0.000013
+
+attention_output_dropout:0.000022
+H2D Time:0.000009
+Kernel Time:0.000004
+Pushpinder -> vals host data: 0.000000
+Pushpinder -> vals device data: 0.000000
+Pushpinder -> vals no of elements: 0.000000
+Pushpinder -> vals size: 0.000000
+
+Pushpinder -> residual host data: 0.000000
+Pushpinder -> residual device data: 0.000000
+Pushpinder -> residual no of elements: 0.000000
+Pushpinder -> residual size: 0.000000
+
+D2H Time:0.000185
+attention_layer_norm:0.000200
+H2D Time:0.000004
+Kernel Time:0.000090
+D2H Time:0.000002
+1st_feed_forward_layer:0.000144
+H2D Time:0.000006
+Kernel Time:0.000004
+D2H Time:0.000002
+gelu:0.000236
+H2D Time:0.000004
+Kernel Time:0.000136
+D2H Time:0.000002
+2nd_feed_forward_layer:0.000188
+Kernel Time: 0.000003
+
+layer_output_dropout:0.000011

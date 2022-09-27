@@ -1,0 +1,415 @@
+==========================================
+SLURM_CLUSTER_NAME = param-shakti
+SLURM_JOB_ACCOUNT = soumyajitcs
+SLURM_JOB_ID = 516767
+SLURM_JOB_NAME = wrap
+SLURM_JOB_NODELIST = cn222
+SLURM_JOB_USER = 20cs91q01
+SLURM_JOB_UID = 6334
+SLURM_JOB_PARTITION = standard-low
+SLURM_TASK_PID = 81580
+SLURM_SUBMIT_DIR = /scratch/20cs91q01/WorkSpace/modacc/cuda
+SLURM_CPUS_ON_NODE = 1
+SLURM_NTASKS = 
+SLURM_TASK_PID = 81580
+==========================================
+
+----------------------------------------------------------------------------
+The following is a list of the modules currently available:
+----------------------------------------------------------------------------
+  R: R/3.6.1
+    R is a language and environment for statistical computing and graphics
+    (S-Plus like). 
+
+  adios: adios/1.13.1
+    The Adaptable IO System (ADIOS) 
+
+  apps/abaqus/2021: apps/abaqus/2021/gnu, apps/abaqus/2021/intel
+    Abaqus 2021 Finite Element Analysis software for modeling,
+    visualization and best-in-class implicit and explicit dynamics FEA. 
+
+  apps/abaqus/6.14: apps/abaqus/6.14/gnu, apps/abaqus/6.14/intel
+
+  apps/abinit/8.10.1: apps/abinit/8.10.1/intel
+
+  apps/ansys/2019r3: apps/ansys/2019r3/AllModules, apps/ansys/2019r3/fluent, ...
+    ANSYS simulation software enables organizations to confidently predict
+    how their products will operate in the real world. We believe that
+    every product is a promise of something greater. 
+
+  apps/ansys/2020r2: apps/ansys/2020r2/AllModules
+    ANSYS simulation software enables organizations to confidently predict
+    how their products will operate in the real world. We believe that
+    every product is a promise of something greater. 
+
+  apps/athena/4.2: apps/athena/4.2/intel
+
+  apps/bowtie2/2.3.5.1: apps/bowtie2/2.3.5.1/intel
+
+  apps/clustalw/2.1: apps/clustalw/2.1/intel
+
+  apps/cp2k/6.2: apps/cp2k/6.2/intel
+
+  apps/fds/6.7.1: apps/fds/6.7.1/intel
+
+  apps/gaussian/16: apps/gaussian/16/gnu
+
+  apps/grads: apps/grads/2.2.1
+
+  apps/gromacs/15.2.2019: apps/gromacs/15.2.2019/intel
+
+  apps/gromacs/2020: apps/gromacs/2020/cpu, apps/gromacs/2020/gpu_cuda_10.1
+
+  apps/gromos/1.4.1: apps/gromos/1.4.1/intel
+
+  apps/hmmer/3.2.1: apps/hmmer/3.2.1/intel
+
+  apps/lammps/29Oct2020/cuda10.2: apps/lammps/29Oct2020/cuda10.2/gpu
+
+  apps/lammps/29Oct2020/impi2020v4: apps/lammps/29Oct2020/impi2020v4/cpu
+
+  apps/lammps/7Aug19/intel: apps/lammps/7Aug19/intel
+
+  apps/matlab: apps/matlab/R2019b, apps/matlab/R2020bu4
+
+  apps/mdynamix: apps/mdynamix/5.2.8
+
+  apps/meep/1.8.0: apps/meep/1.8.0/intel
+
+  apps/meme/5.0.4: apps/meme/5.0.4/intel
+
+  apps/moil/12: apps/moil/12/intel
+
+  apps/mom6: apps/mom6/intel
+
+  apps/mpiblast/1.6.0: apps/mpiblast/1.6.0/intel
+
+  apps/mummer/3.23: apps/mummer/3.23/intel
+
+  apps/namd/2.12/impi2018: apps/namd/2.12/impi2018/cpu, ...
+
+  apps/namd/2.13/impi2019v5: apps/namd/2.13/impi2019v5/cpu, ...
+
+  apps/nektor/4.4.1: apps/nektor/4.4.1/intel
+
+  apps/nwchem/6.8.1: apps/nwchem/6.8.1/intel
+
+  apps/ohpc: apps/ohpc
+
+  apps/openfoam/2.4.0: apps/openfoam/2.4.0/intel
+
+  apps/openfoam/4.1: apps/openfoam/4.1/intel
+
+  apps/openfoam/6.0: apps/openfoam/6.0/intel
+
+  apps/openfoam/8.0: apps/openfoam/8.0/intel
+
+  apps/orca: apps/orca/4.2.1, apps/orca/5.0.1
+
+  apps/phylip/3.697: apps/phylip/3.697/intel
+
+  apps/psi4/1.3.2/intel2019v5: apps/psi4/1.3.2/intel2019v5/cpu
+
+  apps/python-package/gnuplot: apps/python-package/gnuplot/5.2.8
+
+  apps/python-package/nvhpc: apps/python-package/nvhpc/20.7, ...
+
+  apps/python-package/nvhpc-byo-compiler: ...
+
+  apps/python-package/nvhpc-nompi: apps/python-package/nvhpc-nompi/20.7, ...
+
+  apps/python-package/pmix: apps/python-package/pmix/2.2.2
+
+  apps/python-package/python/3.6: apps/python-package/python/3.6
+
+  apps/python-package/python/3.7.4: apps/python-package/python/3.7.4
+
+  apps/python-package/python/conda-python: ...
+
+  apps/python-package/python/intelpython: ...
+
+  apps/python-package/tensorflow: ...
+
+  apps/python-package/tensorflow-intel: ...
+
+  apps/quantum_espresso/6.4.1: apps/quantum_espresso/6.4.1/intel
+
+  apps/rapidCFD/4.1/openmpi: apps/rapidCFD/4.1/openmpi/3.1.0
+
+  apps/rapids/0.18: apps/rapids/0.18/gpu
+
+  apps/regcm/4.6.1: apps/regcm/4.6.1/intel
+
+  apps/roms/3.6: apps/roms/3.6/intel
+
+  apps/schrodinger/2019: apps/schrodinger/2019/intel
+
+  apps/singularity: apps/singularity/3.4.1
+    Application and environment virtualization 
+
+  apps/su2/6.2.0: apps/su2/6.2.0/intel
+
+  apps/su2/7.0.7: apps/su2/7.0.7
+
+  apps/tinker/8.7: apps/tinker/8.7/intel
+
+  apps/turbomole/721: apps/turbomole/721/intel
+
+  apps/upc: apps/upc/2020.4.0
+
+  apps/vega/3.2.0: apps/vega/3.2.0/intel
+
+  apps/wrf-arwpostv3: apps/wrf-arwpostv3
+
+  apps/wrf/4.0.3: apps/wrf/4.0.3/intel
+
+  boost: boost/1.71.0
+    Boost free peer-reviewed portable C++ source libraries 
+
+  compiler/cmake: compiler/cmake/3.15.4
+    CMake is an open-source, cross-platform family of tools designed to
+    build, test and package software. 
+
+  compiler/cuda: compiler/cuda/cuda10.0-test, compiler/cuda/7.0, ...
+
+  compiler/cudnn: compiler/cudnn/7.0.5, compiler/cudnn/7.2.1, ...
+
+  compiler/gcc: compiler/gcc/5.5.0, compiler/gcc/8.3.0, compiler/gcc/10.2.0
+
+  compiler/intel: compiler/intel/2016.4.258, compiler/intel/2018.2.199, ...
+
+  compiler/intel-mnt: compiler/intel-mnt/2016.4.258, ...
+
+  compiler/intel-mpi: compiler/intel-mpi/mpi-2016, ...
+
+  compiler/mpi4py: compiler/mpi4py/mpi4py
+
+  compiler/openmpi/3.1.0: compiler/openmpi/3.1.0/gnu
+
+  compiler/openmpi/4.0.1: compiler/openmpi/4.0.1
+
+  compiler/openmpi/4.0.2: compiler/openmpi/4.0.2
+
+  compiler/pgi/19.4: compiler/pgi/19.4
+
+  compiler/pgi/2019: compiler/pgi/2019
+
+  compiler/pgi/PrgEnv-pgi: compiler/pgi/PrgEnv-pgi/19.4
+
+  compiler/pgi/openmpi/3.1.3: compiler/pgi/openmpi/3.1.3/2019
+
+  compiler/pgi/pgi-llvm: compiler/pgi/pgi-llvm
+
+  compiler/pgi/pgi-nollvm: compiler/pgi/pgi-nollvm
+
+  compiler/pgi_19.10/PrgEnv-pgi: compiler/pgi_19.10/PrgEnv-pgi/19.10
+
+  compiler/pgi_19.10/openmpi/3.1.3: compiler/pgi_19.10/openmpi/3.1.3/2019
+
+  compiler/pgi_19.10/pgi: compiler/pgi_19.10/pgi/19.10, ...
+
+  compiler/pgi_19.10/pgi-llvm: compiler/pgi_19.10/pgi-llvm
+
+  compiler/pgi_19.10/pgi-nollvm: compiler/pgi_19.10/pgi-nollvm
+
+  dimemas: dimemas/5.4.1
+    Dimemas tool 
+
+  extrae: extrae/3.7.0
+    Extrae tool 
+
+  fftw: fftw/3.3.8
+    A Fast Fourier Transform library 
+
+  gsl: gsl/2.6
+    GNU Scientific Library (GSL) 
+
+  hdf5: hdf5/1.10.5
+    A general purpose library and file format for storing scientific data 
+
+  hypre: hypre/2.18.1
+    Scalable algorithms for solving linear systems of equations 
+
+  imb: imb/2018.1
+    Intel MPI Benchmarks (IMB) 
+
+  lib/EasyBuild: lib/EasyBuild/3.9.4
+    Build and installation framework 
+
+  lib/autotools: lib/autotools
+    Developer utilities 
+
+  lib/charliecloud: lib/charliecloud/0.11, lib/charliecloud/0.22
+    Lightweight user-defined software stacks for high-performance computing
+    
+
+  lib/clustershell: lib/clustershell/1.8.2
+    VIM files for ClusterShell 
+
+  lib/desmond_Maestro: lib/desmond_Maestro/2019.3
+
+  lib/fftw2/2.1.5: lib/fftw2/2.1.5/intel-2019.5.281
+
+  lib/fftw3/3.3.8: lib/fftw3/3.3.8/intel-2019.5.281, ...
+
+  lib/hdf5_parallel: lib/hdf5_parallel/1.8.21, lib/hdf5_parallel/1.10.7
+
+  lib/hwloc: lib/hwloc/2.1.0
+    Portable Hardware Locality 
+
+  lib/llvm5: lib/llvm5/5.0.1
+    LLVM Compiler Infrastructure 
+
+  lib/mutationpp: lib/mutationpp/26.8.2019
+
+  lib/netcdf_c: lib/netcdf_c/4.3.3.1, lib/netcdf_c/4.7.4
+
+  lib/netcdf_f: lib/netcdf_f/4.4.0, lib/netcdf_f/4.5.2
+
+  lib/netcdf_parallel: lib/netcdf_parallel/1.8.1, ...
+
+  lib/papi: lib/papi/5.7.0
+    Performance Application Programming Interface 
+
+  lib/pmix: lib/pmix/2.2.2
+
+  lib/prun: lib/prun/1.3
+    job launch utility for multiple MPI families 
+
+  lib/scalapack: lib/scalapack/2.1.0-intel-19.0.5.281
+
+  lib/tcl/8.6.10: lib/tcl/8.6.10/intel2018
+
+  lib/valgrind: lib/valgrind/3.15.0
+    Memory debugging utilities 
+
+  likwid: likwid/4.3.4
+    Toolsuite of command line applications for performance oriented
+    programmers 
+
+  metis: metis/5.1.0
+    Metis development files 
+
+  mfem: mfem/4.0
+    Lightweight, general, scalable C++ library for finite element methods 
+
+  mpiP: mpiP/3.4.1
+    mpiP: a lightweight profiling library for MPI applications. 
+
+  mpich: mpich/3.3.1
+    MPICH MPI implementation 
+
+  mumps: mumps/5.2.1
+    A MUltifrontal Massively Parallel Sparse direct Solver 
+
+  mvapich2: mvapich2/2.3.1
+    OSU MVAPICH2 MPI implementation 
+
+  netcdf: netcdf/4.7.1
+    C Libraries for the Unidata network Common Data Form 
+
+  netcdf-cxx: netcdf-cxx/4.3.1
+    C++ Libraries for the Unidata network Common Data Form 
+
+  netcdf-fortran: netcdf-fortran/4.5.2
+    Fortran Libraries for the Unidata network Common Data Form 
+
+  ocr: ocr/1.0.1
+    Open Community Runtime (OCR) for shared memory 
+
+  omb: omb/5.6.2
+    OSU Micro-benchmarks 
+
+  openblas: openblas/0.3.7
+    An optimized BLAS library based on GotoBLAS2 
+
+  opencoarrays: opencoarrays/2.8.0
+    ABI to leverage the parallel programming features of the Fortran 2018
+    DIS 
+
+  openmpi3: openmpi3/3.1.4
+    A powerful implementation of MPI 
+
+  pdtoolkit: pdtoolkit/3.25
+    PDT is a framework for analyzing source code 
+
+  petsc: petsc/3.12.0
+    Portable Extensible Toolkit for Scientific Computation 
+
+  phdf5: phdf5/1.10.5
+    A general purpose library and file format for storing scientific data 
+
+  plasma: plasma/2.8.0
+    Parallel Linear Algebra Software for Multicore Architectures 
+
+  pnetcdf: pnetcdf/1.12.0
+    A Parallel NetCDF library (PnetCDF) 
+
+  ptscotch: ptscotch/6.0.6
+    Graph, mesh and hypergraph partitioning library using MPI 
+
+  py2-mpi4py: py2-mpi4py/3.0.2
+    Python bindings for the Message Passing Interface (MPI) standard. 
+
+  py2-numpy: py2-numpy/1.15.3
+    NumPy array processing for numbers, strings, records and objects 
+
+  py2-scipy: py2-scipy/1.2.1
+    Scientific Tools for Python 
+
+  py3-mpi4py: py3-mpi4py/3.0.1
+    Python bindings for the Message Passing Interface (MPI) standard. 
+
+  py3-numpy: py3-numpy/1.15.3
+    NumPy array processing for numbers, strings, records and objects 
+
+  py3-scipy: py3-scipy/1.2.1
+    Scientific Tools for Python 
+
+  scalapack: scalapack/2.0.2
+    A subset of LAPACK routines redesigned for heterogenous computing 
+
+  scalasca: scalasca/2.5
+    Toolset for performance analysis of large-scale parallel applications 
+
+  scorep: scorep/6.0
+    Scalable Performance Measurement Infrastructure for Parallel Codes 
+
+  scotch: scotch/6.0.6
+    Graph, mesh and hypergraph partitioning library 
+
+  sionlib: sionlib/1.7.4
+    Scalable I/O Library for Parallel Access to Task-Local Files 
+
+  slepc: slepc/3.12.0
+    A library for solving large scale sparse eigenvalue problems 
+
+  superlu: superlu/5.2.1
+    A general purpose library for the direct solution of linear equations 
+
+  superlu_dist: superlu_dist/6.1.1
+    A general purpose library for the direct solution of linear equations 
+
+  tau: tau/2.28
+    Tuning and Analysis Utilities Profiling Package 
+
+  trilinos: trilinos/12.14.1
+    A collection of libraries of numerical algorithms 
+
+----------------------------------------------------------------------------
+
+To learn more about a package execute:
+
+   $ module spider Foo
+
+where "Foo" is the name of a module.
+
+To find detailed information about a particular package you
+must specify the version if there is more than one version:
+
+   $ module spider Foo/11.1
+
+----------------------------------------------------------------------------
+
+ 
+
